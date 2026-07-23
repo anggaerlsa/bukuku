@@ -40,6 +40,10 @@ Route::middleware('auth')->group(function () {
             ->parameters(['novel' => 'novel'])
             ->names('novels');
 
+        // Share a novel read-only with every signed-in member.
+        Route::patch('novel/{novel}/bagikan', [NovelController::class, 'share'])
+            ->name('novels.share');
+
         // Worlds (Dunia) — each a setting belonging to one novel.
         Route::resource('dunia', WorldController::class)
             ->parameters(['dunia' => 'world'])

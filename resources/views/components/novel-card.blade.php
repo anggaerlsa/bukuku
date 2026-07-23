@@ -14,6 +14,11 @@
             </h3>
             <span class="{{ $statusBadge }} shrink-0">{{ $novel->statusLabel() }}</span>
         </div>
+        @if ($novel->is_shared && $novel->user_id !== auth()->id())
+            <p class="text-xs text-ink-light mt-0.5">🔗 Dibagikan oleh {{ $novel->user?->name ?? 'penulis lain' }}</p>
+        @elseif ($novel->is_shared)
+            <p class="text-xs text-ink-light mt-0.5">🔗 Dibagikan ke member</p>
+        @endif
         @if ($novel->tagline)
             <p class="text-sm text-ink-light italic line-clamp-2 mt-1">{{ $novel->tagline }}</p>
         @endif

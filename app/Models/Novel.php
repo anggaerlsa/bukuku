@@ -23,7 +23,17 @@ class Novel extends Model
         'synopsis',
         'cover_image',
         'status',
+        'is_shared',
+        'shared_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_shared' => 'boolean',
+            'shared_at' => 'datetime',
+        ];
+    }
 
     /**
      * @return array<string, string>
@@ -60,6 +70,12 @@ class Novel extends Model
     public function statusLabel(): string
     {
         return static::statuses()[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    /** Novels other members are allowed to read. */
+    public function scopeShared($query)
+    {
+        return $query->where('is_shared', true);
     }
 
     /** Characters across every world of this novel. */

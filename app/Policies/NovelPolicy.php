@@ -12,9 +12,16 @@ class NovelPolicy
         return $user->hasAnyRole(['superadmin', 'admin', 'author']);
     }
 
+    /**
+     * Reading is also open to every member once the author shares the novel.
+     * Only `view` widens — update/delete below stay with the owner, so a
+     * shared novel is strictly read-only for everybody else.
+     */
     public function view(User $user, Novel $novel): bool
     {
-        return $user->can('manage novels') || $user->id === $novel->user_id;
+        return $user->can('manage novels')
+            || $user->id === $novel->user_id
+            || ($novel->is_shared && $user->hasAnyRole(['superadmin', 'admin', 'author']));
     }
 
     public function create(User $user): bool

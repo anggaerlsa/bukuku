@@ -21,8 +21,17 @@ class NovelController extends Controller
         $user = $request->user();
         $query = Novel::withCount('worlds')->with('user', 'genres')->latest();
 
-        if (! $user->can('manage novels')) {
+        // "milik" = punyaku · "dibagikan" = dibagikan penulis lain · "" = keduanya
+        $scope = in_array($request->query('scope'), ['milik', 'dibagikan'], true)
+            ? $request->query('scope') : null;
+
+        if ($scope === 'milik') {
             $query->where('user_id', $user->id);
+        } elseif ($scope === 'dibagikan') {
+            $query->shared()->where('user_id', '!=', $user->id);
+        } elseif (! $user->can('manage novels')) {
+            // Everyone sees their own plus whatever other authors have shared.
+            $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('is_shared', true));
         }
 
         if ($search = trim((string) $request->query('q', ''))) {
@@ -32,8 +41,9 @@ class NovelController extends Controller
         }
 
         $novels = $query->paginate(12)->withQueryString();
+        $sharedCount = Novel::shared()->where('user_id', '!=', $user->id)->count();
 
-        return view('manage.novels.index', compact('novels', 'search'));
+        return view('manage.novels.index', compact('novels', 'search', 'scope', 'sharedCount'));
     }
 
     public function create()
@@ -99,6 +109,26 @@ class NovelController extends Controller
         $novel->genres()->sync($request->input('genres', []));
 
         return redirect()->route('novels.show', $novel)->with('status', "Novel \"{$novel->title}\" diperbarui.");
+    }
+
+    /**
+     * Turn member-wide read access on or off. Only the owner (or someone who
+     * can manage novels) may flip it — it is an `update`, not a `view`.
+     */
+    public function share(Request $request, Novel $novel)
+    {
+        $this->authorize('update', $novel);
+
+        $on = $request->boolean('share');
+
+        $novel->update([
+            'is_shared' => $on,
+            'shared_at' => $on ? now() : null,
+        ]);
+
+        return back()->with('status', $on
+            ? "Novel \"{$novel->title}\" kini bisa dibaca semua member — hanya lihat, tanpa bisa disunting."
+            : "Novel \"{$novel->title}\" kembali privat.");
     }
 
     public function destroy(Novel $novel)

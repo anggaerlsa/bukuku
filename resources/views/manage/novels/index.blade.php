@@ -17,9 +17,24 @@
                 <x-input-label for="q" value="Cari novel" />
                 <x-text-input id="q" name="q" type="text" class="mt-1" :value="$search" placeholder="Judul atau tagline…" />
             </div>
+            <div>
+                <x-input-label for="scope" value="Tampilkan" />
+                <select id="scope" name="scope" class="select mt-1">
+                    <option value="">Semua</option>
+                    <option value="milik" @selected($scope === 'milik')>Milik saya</option>
+                    <option value="dibagikan" @selected($scope === 'dibagikan')>Dibagikan penulis lain{{ $sharedCount ? " ({$sharedCount})" : '' }}</option>
+                </select>
+            </div>
             <button class="btn-outline">Cari</button>
-            @if ($search)<a href="{{ route('novels.index') }}" class="btn-outline">Reset</a>@endif
+            @if ($search || $scope)<a href="{{ route('novels.index') }}" class="btn-outline">Reset</a>@endif
         </form>
+
+        @if ($scope === 'dibagikan')
+            <p class="text-sm text-ink-light">
+                Novel yang dibagikan penulis lain sebagai referensi — kamu bisa menjelajahi dunia, lokasi,
+                dan karakternya, tapi <strong>hanya lihat</strong>.
+            </p>
+        @endif
 
         @if ($novels->isEmpty())
             <div class="panel p-12 text-center">

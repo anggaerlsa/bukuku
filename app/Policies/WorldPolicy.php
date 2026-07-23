@@ -12,9 +12,18 @@ class WorldPolicy
         return $user->hasAnyRole(['superadmin', 'admin', 'author']);
     }
 
+    /**
+     * A world inherits its novel's sharing: if the author shared the novel,
+     * every member may read the world and the lore under it. Characters,
+     * locations and custom fields all authorise `view` against the world, so
+     * this one line is what opens them — and nothing else, since every write
+     * path checks `update` instead.
+     */
     public function view(User $user, World $world): bool
     {
-        return $user->can('manage worlds') || $user->id === $world->user_id;
+        return $user->can('manage worlds')
+            || $user->id === $world->user_id
+            || ($world->novel?->is_shared && $user->hasAnyRole(['superadmin', 'admin', 'author']));
     }
 
     public function create(User $user): bool
