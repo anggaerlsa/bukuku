@@ -1,4 +1,4 @@
-@props(['world'])
+@props(['world', 'showNovel' => true])
 
 @php
     $statusBadge = ['active' => 'badge-success', 'concept' => 'badge-accent', 'archived' => 'badge-muted'][$world->status] ?? 'badge-muted';
@@ -12,6 +12,11 @@
         <span class="absolute top-2 left-2 {{ $statusBadge }}">{{ $world->statusLabel() }}</span>
     </div>
     <div class="p-4 flex-1 flex flex-col">
+        @if ($showNovel && $world->novel)
+            <p class="text-xs text-ink-light font-display uppercase tracking-wider line-clamp-1">
+                📕 {{ $world->novel->title }}
+            </p>
+        @endif
         <h3 class="font-display text-lg font-semibold text-ink leading-snug group-hover:text-accent-dark transition">{{ $world->name }}</h3>
         @if ($world->tagline)
             <p class="text-sm text-ink-light italic line-clamp-2 mt-1">{{ $world->tagline }}</p>

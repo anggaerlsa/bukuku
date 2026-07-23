@@ -4,11 +4,13 @@ Ruang kerja **worldbuilding** untuk penulis novel — tempat merancang dan menda
 
 Ini **bukan** aplikasi untuk membaca novel. Ini meja kerja penulisnya.
 
-Satu penulis bisa punya banyak **Dunia**, dan tiap dunia bebas temanya — fantasi abad pertengahan, kehidupan modern, atau fiksi ilmiah. Aplikasinya sendiri netral; rasa sebuah dunia datang dari genre yang dipilih, sebutan lokasi yang bebas diketik, dan atribut khusus yang ditentukan penulisnya sendiri.
+Susunannya bertingkat: **Penulis → Novel → Dunia → lore (karakter & lokasi)**. Satu novel bisa menaungi banyak dunia — cerita bajak laut luar angkasa, misalnya, bisa menyinggahi beberapa planet, stasiun, dan koloni, masing-masing dengan lore sendiri. Tiap dunia bebas temanya; aplikasinya sendiri netral.
 
 ## Fitur
 
-**Dunia** — tiap dunia milik satu penulis, punya premis, sampul, status (Konsep / Aktif / Arsip), dan tag genre.
+**Novel** — lapisan paling atas: judul, tagline, sinopsis, sampul, dan status. Sebuah novel tidak bisa dihapus selama masih menaungi dunia, supaya lorenya tidak ikut lenyap tanpa disadari.
+
+**Dunia** — sebuah latar milik satu novel, punya premis, sampul, status (Konsep / Aktif / Arsip), dan tag genre. Daftar dunia bisa disaring per novel.
 
 **Lokasi berjenjang lima tingkat** — Benua → Negara → Provinsi → Kota → Desa, ditampilkan sebagai pohon. Tiap tingkat punya **tabelnya sendiri** di database, bukan satu tabel dengan kolom `parent_id`. Tiap lokasi bisa diberi sebutan bebas sebagai identitas dalam dunia — tingkat *Provinsi* boleh tampil sebagai *Dukedom*, tingkat *Kota* sebagai *Metropolis* — tanpa mengubah strukturnya.
 
@@ -24,7 +26,7 @@ Satu penulis bisa punya banyak **Dunia**, dan tiap dunia bebas temanya — fanta
 
 **Atribut khusus per dunia** — penulis menentukan sendiri kolom tambahan sesuai tema dunianya (*Tingkat Mana*, *Klearans Keamanan*, *Kasta*). Bisa berupa teks, angka, pilihan, atau ya/tidak, dan diarahkan ke Karakter, semua Lokasi, atau satu tingkat lokasi saja.
 
-**Peran pengguna** — Superadmin, Admin, dan Penulis, memakai `spatie/laravel-permission`. Penulis hanya bisa mengelola dunia miliknya sendiri. Pendaftaran mandiri dimatikan; akun dibuat lewat menu Pengguna.
+**Peran pengguna** — Superadmin, Admin, dan Penulis, memakai `spatie/laravel-permission`. Penulis hanya bisa mengelola novel dan dunia miliknya sendiri. Pendaftaran mandiri dimatikan; akun dibuat lewat menu Pengguna.
 
 ## Teknologi
 

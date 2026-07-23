@@ -1,7 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <a href="{{ route('worlds.index') }}" class="text-sm text-ink hover:text-accent-dark">← Semua Dunia</a>
+            @if ($world->novel)
+                <a href="{{ route('novels.show', $world->novel) }}" class="text-sm text-ink hover:text-accent-dark">← 📕 {{ $world->novel->title }}</a>
+            @else
+                <a href="{{ route('worlds.index') }}" class="text-sm text-ink hover:text-accent-dark">← Semua Dunia</a>
+            @endif
             <div class="flex items-center gap-2">
                 <a href="{{ route('custom-fields.index', $world) }}" class="btn-outline btn-sm">⚙️ Atribut Dunia</a>
                 @can('update', $world)
@@ -24,6 +28,12 @@
                         <span class="badge-accent">{{ $genre->name }}</span>
                     @endforeach
                 </div>
+                @if ($world->novel)
+                    <a href="{{ route('novels.show', $world->novel) }}"
+                       class="text-white/70 hover:text-accent-light font-display uppercase tracking-wider text-xs sm:text-sm">
+                        📕 {{ $world->novel->title }}
+                    </a>
+                @endif
                 <h1 class="font-display text-3xl sm:text-5xl text-accent-light leading-tight">{{ $world->name }}</h1>
                 @if ($world->tagline)
                     <p class="text-white/80 italic mt-1 text-lg">{{ $world->tagline }}</p>

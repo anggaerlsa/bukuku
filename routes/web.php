@@ -8,6 +8,7 @@ use App\Http\Controllers\GenreController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\NovelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorldController;
@@ -33,7 +34,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::prefix('kelola')->group(function () {
-        // Worlds (Dunia) — each a universe owned by an author.
+        // Novels — the layer above worlds: the book, which may span several
+        // settings. One author → many novels → many worlds.
+        Route::resource('novel', NovelController::class)
+            ->parameters(['novel' => 'novel'])
+            ->names('novels');
+
+        // Worlds (Dunia) — each a setting belonging to one novel.
         Route::resource('dunia', WorldController::class)
             ->parameters(['dunia' => 'world'])
             ->names('worlds');

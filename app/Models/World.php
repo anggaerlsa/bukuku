@@ -17,6 +17,7 @@ class World extends Model
 
     protected $fillable = [
         'user_id',
+        'novel_id',
         'name',
         'slug',
         'tagline',
@@ -45,6 +46,12 @@ class World extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** The novel this world is a setting for. */
+    public function novel(): BelongsTo
+    {
+        return $this->belongsTo(Novel::class);
     }
 
     public function genres(): BelongsToMany

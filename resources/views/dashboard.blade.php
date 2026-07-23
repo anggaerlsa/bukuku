@@ -5,15 +5,27 @@
                 <h1 class="font-display text-2xl text-ink">{{ $canManageAll ? 'Semua Dunia' : 'Dunia Saya' }}</h1>
                 <p class="text-sm text-ink-light">Selamat datang kembali, {{ auth()->user()->name }} · <span class="badge-accent">{{ auth()->user()->primaryRoleLabel() }}</span></p>
             </div>
-            @can('create worlds')
-                <a href="{{ route('worlds.create') }}" class="btn-primary">✚ Dunia Baru</a>
-            @endcan
+            <div class="flex items-center gap-2">
+                @can('create novels')
+                    <a href="{{ route('novels.create') }}" class="btn-primary">✚ Novel Baru</a>
+                @endcan
+                @can('create worlds')
+                    <a href="{{ route('worlds.create') }}" class="btn-outline">✚ Dunia Baru</a>
+                @endcan
+            </div>
         </div>
     </x-slot>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {{-- Stats --}}
-        <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-4 grid-cols-2 lg:grid-cols-5">
+            <div class="panel p-5 flex items-center gap-4">
+                <div class="grid place-items-center h-12 w-12 rounded-lg bg-accent/15 text-2xl">📕</div>
+                <div>
+                    <p class="font-display text-3xl text-ink leading-none">{{ $stats['novels'] }}</p>
+                    <p class="text-xs uppercase tracking-wider text-ink-light mt-1">Novel</p>
+                </div>
+            </div>
             <div class="panel p-5 flex items-center gap-4">
                 <div class="grid place-items-center h-12 w-12 rounded-lg bg-accent/15 text-2xl">🌍</div>
                 <div>
@@ -61,6 +73,31 @@
                 @can('manage users')<a href="{{ route('users.index') }}" class="btn-outline">👤 Kelola Pengguna</a>@endcan
             </div>
         @endcanany
+
+        {{-- Novels — the layer above worlds --}}
+        <div>
+            <div class="flex items-center gap-3 mb-5">
+                <h2 class="font-display text-xl text-ink">{{ $canManageAll ? 'Novel Terbaru' : 'Novel Saya' }}</h2>
+                <span class="h-px flex-1 bg-shell/20"></span>
+                <a href="{{ route('novels.index') }}" class="text-sm text-ink hover:text-accent-dark shrink-0">Semua →</a>
+            </div>
+
+            @if ($novels->isEmpty())
+                <div class="panel p-12 text-center">
+                    <p class="font-display text-xl text-ink">Belum ada novel.</p>
+                    <p class="text-ink-light mt-1">Novel adalah wadah paling atas — dunianya menyusul di dalamnya.</p>
+                    @can('create novels')
+                        <a href="{{ route('novels.create') }}" class="btn-primary mt-4">✚ Novel Pertama</a>
+                    @endcan
+                </div>
+            @else
+                <div class="grid gap-5 sm:grid-cols-2">
+                    @foreach ($novels as $novel)
+                        <x-novel-card :novel="$novel" />
+                    @endforeach
+                </div>
+            @endif
+        </div>
 
         {{-- Worlds --}}
         <div>

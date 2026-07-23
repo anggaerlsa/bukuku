@@ -6,6 +6,29 @@
     @csrf
     @if ($editing) @method('PUT') @endif
 
+    {{-- A world always belongs to a novel — that is the layer above it. --}}
+    <div>
+        <x-input-label for="novel_id" value="Novel" />
+        @if ($novels->isEmpty())
+            <div class="input mt-1 flex items-center bg-surface-sunken text-sm text-ink-light">
+                Belum ada novel.
+            </div>
+            <p class="text-xs text-danger mt-1">
+                Dunia bernaung di bawah sebuah novel —
+                <a href="{{ route('novels.create') }}" class="underline">buat novelnya dulu</a>.
+            </p>
+        @else
+            <select id="novel_id" name="novel_id" class="select mt-1" required>
+                <option value="">— pilih novel —</option>
+                @foreach ($novels as $novel)
+                    <option value="{{ $novel->id }}" @selected((string) old('novel_id', $world->novel_id) === (string) $novel->id)>{{ $novel->title }}</option>
+                @endforeach
+            </select>
+            <p class="text-xs text-ink-light mt-1">Satu novel bisa menaungi banyak dunia.</p>
+        @endif
+        <x-input-error :messages="$errors->get('novel_id')" />
+    </div>
+
     <div>
         <x-input-label for="name" value="Nama Dunia" />
         <x-text-input id="name" name="name" type="text" class="mt-1" :value="old('name', $world->name)" required autofocus placeholder="cth. Aswanagari" />

@@ -17,8 +17,19 @@
                 <x-input-label for="q" value="Cari dunia" />
                 <x-text-input id="q" name="q" type="text" class="mt-1" :value="$search" placeholder="Nama dunia…" />
             </div>
+            @if ($novels->isNotEmpty())
+                <div>
+                    <x-input-label for="novel" value="Novel" />
+                    <select id="novel" name="novel" class="select mt-1">
+                        <option value="">Semua novel</option>
+                        @foreach ($novels as $novel)
+                            <option value="{{ $novel->id }}" @selected((string) $novelId === (string) $novel->id)>{{ $novel->title }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <button class="btn-outline">Cari</button>
-            @if ($search)<a href="{{ route('worlds.index') }}" class="btn-outline">Reset</a>@endif
+            @if ($search || $novelId)<a href="{{ route('worlds.index') }}" class="btn-outline">Reset</a>@endif
         </form>
 
         @if ($worlds->isEmpty())

@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Character;
 use App\Models\Genre;
 use App\Models\Image;
+use App\Models\Novel;
 use App\Models\World;
 use App\Support\Hierarchy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class WorldController extends Controller
 {
@@ -18,7 +20,9 @@ class WorldController extends Controller
         $this->authorize('viewAny', World::class);
 
         $user = $request->user();
-        $query = World::withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])->with('genres')->latest();
+        $query = World::withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])
+            ->with('genres', 'novel')
+            ->latest();
 
         if (! $user->can('manage worlds')) {
             $query->where('user_id', $user->id);
@@ -28,9 +32,18 @@ class WorldController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
+        // Narrow to one novel, chosen from the ones this user may see.
+        $novels = $this->availableNovels($request);
+        $novelId = $request->query('novel');
+        if ($novelId && $novels->contains('id', (int) $novelId)) {
+            $query->where('novel_id', (int) $novelId);
+        } else {
+            $novelId = null;
+        }
+
         $worlds = $query->paginate(12)->withQueryString();
 
-        return view('manage.worlds.index', compact('worlds', 'search'));
+        return view('manage.worlds.index', compact('worlds', 'search', 'novels', 'novelId'));
     }
 
     public function create()
@@ -38,9 +51,10 @@ class WorldController extends Controller
         $this->authorize('create', World::class);
 
         return view('manage.worlds.create', [
-            'world' => new World(['status' => 'active']),
+            'world' => new World(['status' => 'active', 'novel_id' => request()->query('novel')]),
             'genres' => Genre::orderBy('name')->get(),
             'selectedGenres' => [],
+            'novels' => $this->availableNovels(request()),
         ]);
     }
 
@@ -64,7 +78,7 @@ class WorldController extends Controller
     {
         $this->authorize('view', $world);
 
-        $world->load('genres', 'user')->loadCount('characters');
+        $world->load('genres', 'user', 'novel')->loadCount('characters');
         $characters = $world->characters()->latest()->take(6)->get();
         $benuas = $world->benuas()->with('negaras.provinsis.kotas.desas')->orderBy('name')->get();
         $locationsCount = $world->locationsCount();
@@ -80,6 +94,7 @@ class WorldController extends Controller
             'world' => $world,
             'genres' => Genre::orderBy('name')->get(),
             'selectedGenres' => $world->genres->pluck('id')->all(),
+            'novels' => $this->availableNovels(request()),
         ]);
     }
 
@@ -135,9 +150,25 @@ class WorldController extends Controller
         return redirect()->route('worlds.index')->with('status', "Dunia \"{$name}\" telah dilenyapkan beserta seluruh lorenya.");
     }
 
+    /**
+     * Novels this user may file a world under: their own, or every one when
+     * they can manage novels.
+     */
+    private function availableNovels(Request $request)
+    {
+        return Novel::query()
+            ->when(! $request->user()->can('manage novels'), fn ($q) => $q->where('user_id', $request->user()->id))
+            ->orderBy('title')
+            ->get(['id', 'title']);
+    }
+
     private function validateWorld(Request $request): array
     {
+        // A world must belong to a novel the user is actually allowed to use.
+        $allowedNovels = $this->availableNovels($request)->pluck('id')->all();
+
         return $request->validate([
+            'novel_id' => ['required', Rule::in($allowedNovels)],
             'name' => 'required|string|max:255',
             'tagline' => 'nullable|string|max:255',
             'premise' => 'nullable|string',
@@ -146,6 +177,9 @@ class WorldController extends Controller
             'cover_url' => 'nullable|url|max:2048',
             'genres' => 'nullable|array',
             'genres.*' => 'exists:genres,id',
+        ], [
+            'novel_id.required' => 'Pilih novel tempat dunia ini bernaung.',
+            'novel_id.in' => 'Novel itu tidak tersedia untukmu.',
         ]);
     }
 

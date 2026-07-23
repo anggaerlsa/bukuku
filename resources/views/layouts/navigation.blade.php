@@ -1,5 +1,6 @@
 @php
-    $inWorlds = request()->routeIs('worlds.*') || request()->routeIs('characters.*') || request()->routeIs('locations.*');
+    $inWorlds = request()->routeIs('worlds.*') || request()->routeIs('characters.*')
+        || request()->routeIs('locations.*') || request()->routeIs('custom-fields.*');
 @endphp
 <nav x-data="{ open: false }" class="panel-shell rounded-none border-x-0 border-t-0 border-b-2 border-accent/40 shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,6 +15,7 @@
                     <a href="{{ route('dashboard') }}" class="nav-top {{ request()->routeIs('dashboard') ? 'nav-top-active' : '' }}">Dasbor</a>
 
                     @hasanyrole('superadmin|admin|author')
+                        <a href="{{ route('novels.index') }}" class="nav-top {{ request()->routeIs('novels.*') ? 'nav-top-active' : '' }}">Novel</a>
                         <a href="{{ route('worlds.index') }}" class="nav-top {{ $inWorlds ? 'nav-top-active' : '' }}">Dunia</a>
                     @endhasanyrole
 
@@ -72,6 +74,7 @@
     <div x-show="open" x-cloak class="md:hidden border-t border-accent/20 px-4 py-3 space-y-1">
         <a href="{{ route('dashboard') }}" class="block nav-top {{ request()->routeIs('dashboard') ? 'nav-top-active' : '' }}">Dasbor</a>
         @hasanyrole('superadmin|admin|author')
+            <a href="{{ route('novels.index') }}" class="block nav-top {{ request()->routeIs('novels.*') ? 'nav-top-active' : '' }}">Novel</a>
             <a href="{{ route('worlds.index') }}" class="block nav-top {{ $inWorlds ? 'nav-top-active' : '' }}">Dunia</a>
         @endhasanyrole
         @can('manage genres')
