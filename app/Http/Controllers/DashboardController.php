@@ -24,8 +24,9 @@ class DashboardController extends Controller
             $locations += Hierarchy::model($tier)::whereIn('world_id', $worldIds)->count();
         }
 
-        $novelQuery = Novel::query()
-            ->when(! $user->can('manage novels'), fn ($q) => $q->where('user_id', $user->id));
+        // "Novel saya" is always strictly mine, even for someone who may manage
+        // every novel — the shared ones get their own list below.
+        $novelQuery = Novel::where('user_id', $user->id);
 
         $stats = [
             'novels' => (clone $novelQuery)->count(),
@@ -37,6 +38,16 @@ class DashboardController extends Controller
 
         $novels = (clone $novelQuery)->withCount('worlds')->with('genres')->latest()->take(4)->get();
 
+        // Novels other authors opened up for reading.
+        $sharedNovels = Novel::shared()
+            ->where('user_id', '!=', $user->id)
+            ->withCount('worlds')
+            ->with('genres', 'user')
+            ->latest()
+            ->take(4)
+            ->get();
+        $sharedNovelsTotal = Novel::shared()->where('user_id', '!=', $user->id)->count();
+
         $worlds = World::query()
             ->when(! $canManageAll, fn ($q) => $q->where('user_id', $user->id))
             ->withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])
@@ -45,6 +56,6 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
-        return view('dashboard', compact('stats', 'novels', 'worlds', 'canManageAll'));
+        return view('dashboard', compact('stats', 'novels', 'sharedNovels', 'sharedNovelsTotal', 'worlds', 'canManageAll'));
     }
 }

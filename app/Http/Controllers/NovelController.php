@@ -19,31 +19,31 @@ class NovelController extends Controller
         $this->authorize('viewAny', Novel::class);
 
         $user = $request->user();
-        $query = Novel::withCount('worlds')->with('user', 'genres')->latest();
+        $search = trim((string) $request->query('q', ''));
 
-        // "milik" = punyaku · "dibagikan" = dibagikan penulis lain · "" = keduanya
-        $scope = in_array($request->query('scope'), ['milik', 'dibagikan'], true)
-            ? $request->query('scope') : null;
+        // Own novels and other people's shared ones are listed separately, each
+        // with its own page cursor so paging one never disturbs the other.
+        $base = fn () => Novel::withCount('worlds')
+            ->with('user', 'genres')
+            ->when($search, fn ($q) => $q->where(fn ($w) => $w
+                ->where('title', 'like', "%{$search}%")
+                ->orWhere('tagline', 'like', "%{$search}%")))
+            ->latest();
 
-        if ($scope === 'milik') {
-            $query->where('user_id', $user->id);
-        } elseif ($scope === 'dibagikan') {
-            $query->shared()->where('user_id', '!=', $user->id);
-        } elseif (! $user->can('manage novels')) {
-            // Everyone sees their own plus whatever other authors have shared.
-            $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('is_shared', true));
-        }
+        $novels = $base()->where('user_id', $user->id)
+            ->paginate(12, ['*'], 'halaman')->withQueryString();
 
-        if ($search = trim((string) $request->query('q', ''))) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")->orWhere('tagline', 'like', "%{$search}%");
-            });
-        }
+        $shared = $base()->shared()->where('user_id', '!=', $user->id)
+            ->paginate(12, ['*'], 'dibagikan')->withQueryString();
 
-        $novels = $query->paginate(12)->withQueryString();
-        $sharedCount = Novel::shared()->where('user_id', '!=', $user->id)->count();
+        // Someone who can manage novels also sees the rest — the ones nobody
+        // shared. Kept apart so it never blurs with "shared with me".
+        $others = $user->can('manage novels')
+            ? $base()->where('user_id', '!=', $user->id)->where('is_shared', false)
+                ->paginate(12, ['*'], 'lain')->withQueryString()
+            : null;
 
-        return view('manage.novels.index', compact('novels', 'search', 'scope', 'sharedCount'));
+        return view('manage.novels.index', compact('novels', 'shared', 'others', 'search'));
     }
 
     public function create()

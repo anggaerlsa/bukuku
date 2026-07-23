@@ -74,17 +74,17 @@
             </div>
         @endcanany
 
-        {{-- Novels — the layer above worlds --}}
+        {{-- Novel milik sendiri --}}
         <div>
             <div class="flex items-center gap-3 mb-5">
-                <h2 class="font-display text-xl text-ink">{{ $canManageAll ? 'Novel Terbaru' : 'Novel Saya' }}</h2>
+                <h2 class="font-display text-xl text-ink">📕 Novel Saya</h2>
                 <span class="h-px flex-1 bg-shell/20"></span>
                 <a href="{{ route('novels.index') }}" class="text-sm text-ink hover:text-accent-dark shrink-0">Semua →</a>
             </div>
 
             @if ($novels->isEmpty())
                 <div class="panel p-12 text-center">
-                    <p class="font-display text-xl text-ink">Belum ada novel.</p>
+                    <p class="font-display text-xl text-ink">Kamu belum punya novel.</p>
                     <p class="text-ink-light mt-1">Novel adalah wadah paling atas — dunianya menyusul di dalamnya.</p>
                     @can('create novels')
                         <a href="{{ route('novels.create') }}" class="btn-primary mt-4">✚ Novel Pertama</a>
@@ -93,6 +93,29 @@
             @else
                 <div class="grid gap-5 sm:grid-cols-2">
                     @foreach ($novels as $novel)
+                        <x-novel-card :novel="$novel" />
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        {{-- Novel yang dibagikan penulis lain — terpisah, dan hanya bisa dibaca --}}
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <h2 class="font-display text-xl text-ink">🔗 Novel Dibagikan</h2>
+                @if ($sharedNovelsTotal)<span class="badge-success">{{ $sharedNovelsTotal }}</span>@endif
+                <span class="h-px flex-1 bg-shell/20"></span>
+                <a href="{{ route('novels.index') }}#dibagikan" class="text-sm text-ink hover:text-accent-dark shrink-0">Semua →</a>
+            </div>
+            <p class="text-sm text-ink-light mb-5">Dibagikan penulis lain sebagai referensi — hanya bisa dilihat.</p>
+
+            @if ($sharedNovels->isEmpty())
+                <div class="panel p-8 text-center text-ink-light">
+                    Belum ada penulis lain yang membagikan novelnya.
+                </div>
+            @else
+                <div class="grid gap-5 sm:grid-cols-2">
+                    @foreach ($sharedNovels as $novel)
                         <x-novel-card :novel="$novel" />
                     @endforeach
                 </div>
