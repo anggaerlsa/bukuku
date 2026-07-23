@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Character;
-use App\Models\Genre;
 use App\Models\Image;
 use App\Models\Novel;
 use App\Models\World;
@@ -21,7 +20,7 @@ class WorldController extends Controller
 
         $user = $request->user();
         $query = World::withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])
-            ->with('genres', 'novel')
+            ->with('novel')
             ->latest();
 
         if (! $user->can('manage worlds')) {
@@ -52,8 +51,6 @@ class WorldController extends Controller
 
         return view('manage.worlds.create', [
             'world' => new World(['status' => 'active', 'novel_id' => request()->query('novel')]),
-            'genres' => Genre::orderBy('name')->get(),
-            'selectedGenres' => [],
             'novels' => $this->availableNovels(request()),
         ]);
     }
@@ -68,7 +65,6 @@ class WorldController extends Controller
         $data['cover_image'] = $this->resolveImage($request, 'cover_image', 'cover_url', 'covers', null);
 
         $world = World::create($data);
-        $world->genres()->sync($request->input('genres', []));
 
         return redirect()->route('worlds.show', $world)
             ->with('status', "Dunia \"{$world->name}\" telah ditempa. Mulailah membangun lorenya!");
@@ -78,7 +74,7 @@ class WorldController extends Controller
     {
         $this->authorize('view', $world);
 
-        $world->load('genres', 'user', 'novel')->loadCount('characters');
+        $world->load('user', 'novel.genres')->loadCount('characters');
         $characters = $world->characters()->latest()->take(6)->get();
         $benuas = $world->benuas()->with('negaras.provinsis.kotas.desas')->orderBy('name')->get();
         $locationsCount = $world->locationsCount();
@@ -92,8 +88,6 @@ class WorldController extends Controller
 
         return view('manage.worlds.edit', [
             'world' => $world,
-            'genres' => Genre::orderBy('name')->get(),
-            'selectedGenres' => $world->genres->pluck('id')->all(),
             'novels' => $this->availableNovels(request()),
         ]);
     }
@@ -107,7 +101,6 @@ class WorldController extends Controller
         $data['cover_image'] = $this->resolveImage($request, 'cover_image', 'cover_url', 'covers', $world->cover_image);
 
         $world->update($data);
-        $world->genres()->sync($request->input('genres', []));
 
         return redirect()->route('worlds.show', $world)->with('status', "Dunia \"{$world->name}\" diperbarui.");
     }
@@ -175,8 +168,6 @@ class WorldController extends Controller
             'status' => 'required|in:' . implode(',', array_keys(World::statuses())),
             'cover_image' => 'nullable|image|max:2048',
             'cover_url' => 'nullable|url|max:2048',
-            'genres' => 'nullable|array',
-            'genres.*' => 'exists:genres,id',
         ], [
             'novel_id.required' => 'Pilih novel tempat dunia ini bernaung.',
             'novel_id.in' => 'Novel itu tidak tersedia untukmu.',

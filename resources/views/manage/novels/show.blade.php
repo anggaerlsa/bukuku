@@ -19,6 +19,9 @@
             <div class="space-y-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="{{ $statusBadge }}">{{ $novel->statusLabel() }}</span>
+                    @foreach ($novel->genres as $genre)
+                        <span class="badge-accent">{{ $genre->name }}</span>
+                    @endforeach
                     <span class="text-xs text-ink-light font-display uppercase tracking-wider">Novel</span>
                 </div>
                 <h1 class="font-display text-3xl sm:text-4xl text-ink leading-tight">{{ $novel->title }}</h1>

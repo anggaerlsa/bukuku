@@ -35,12 +35,12 @@ class DashboardController extends Controller
             'users' => User::count(),
         ];
 
-        $novels = (clone $novelQuery)->withCount('worlds')->latest()->take(4)->get();
+        $novels = (clone $novelQuery)->withCount('worlds')->with('genres')->latest()->take(4)->get();
 
         $worlds = World::query()
             ->when(! $canManageAll, fn ($q) => $q->where('user_id', $user->id))
             ->withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])
-            ->with('genres', 'user', 'novel')
+            ->with('user', 'novel')
             ->latest()
             ->take(6)
             ->get();

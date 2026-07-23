@@ -17,6 +17,13 @@
         @if ($novel->tagline)
             <p class="text-sm text-ink-light italic line-clamp-2 mt-1">{{ $novel->tagline }}</p>
         @endif
+        @if ($novel->relationLoaded('genres') && $novel->genres->isNotEmpty())
+            <div class="flex flex-wrap gap-1 mt-2">
+                @foreach ($novel->genres->take(3) as $genre)
+                    <span class="badge-muted">{{ $genre->name }}</span>
+                @endforeach
+            </div>
+        @endif
         <div class="mt-auto pt-3 text-xs text-ink-light font-display">
             🌍 {{ $novel->worlds_count ?? $novel->worlds()->count() }} Dunia
         </div>

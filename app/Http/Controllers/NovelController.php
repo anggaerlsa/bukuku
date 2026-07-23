@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Genre;
 use App\Models\Novel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +19,7 @@ class NovelController extends Controller
         $this->authorize('viewAny', Novel::class);
 
         $user = $request->user();
-        $query = Novel::withCount('worlds')->with('user')->latest();
+        $query = Novel::withCount('worlds')->with('user', 'genres')->latest();
 
         if (! $user->can('manage novels')) {
             $query->where('user_id', $user->id);
@@ -39,7 +40,11 @@ class NovelController extends Controller
     {
         $this->authorize('create', Novel::class);
 
-        return view('manage.novels.create', ['novel' => new Novel(['status' => 'active'])]);
+        return view('manage.novels.create', [
+            'novel' => new Novel(['status' => 'active']),
+            'genres' => Genre::orderBy('name')->get(),
+            'selectedGenres' => [],
+        ]);
     }
 
     public function store(Request $request)
@@ -52,6 +57,7 @@ class NovelController extends Controller
         $data['cover_image'] = $this->resolveImage($request, null);
 
         $novel = Novel::create($data);
+        $novel->genres()->sync($request->input('genres', []));
 
         return redirect()->route('novels.show', $novel)
             ->with('status', "Novel \"{$novel->title}\" dibuat. Tambahkan dunia tempat ceritanya berlangsung.");
@@ -61,10 +67,9 @@ class NovelController extends Controller
     {
         $this->authorize('view', $novel);
 
-        $novel->load('user');
+        $novel->load('user', 'genres');
         $worlds = $novel->worlds()
             ->withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])
-            ->with('genres')
             ->latest()
             ->get();
 
@@ -75,7 +80,11 @@ class NovelController extends Controller
     {
         $this->authorize('update', $novel);
 
-        return view('manage.novels.edit', compact('novel'));
+        return view('manage.novels.edit', [
+            'novel' => $novel,
+            'genres' => Genre::orderBy('name')->get(),
+            'selectedGenres' => $novel->genres->pluck('id')->all(),
+        ]);
     }
 
     public function update(Request $request, Novel $novel)
@@ -87,6 +96,7 @@ class NovelController extends Controller
         $data['cover_image'] = $this->resolveImage($request, $novel->cover_image);
 
         $novel->update($data);
+        $novel->genres()->sync($request->input('genres', []));
 
         return redirect()->route('novels.show', $novel)->with('status', "Novel \"{$novel->title}\" diperbarui.");
     }
@@ -120,6 +130,8 @@ class NovelController extends Controller
             'status' => 'required|in:' . implode(',', array_keys(Novel::statuses())),
             'cover_image' => 'nullable|image|max:2048',
             'cover_url' => 'nullable|url|max:2048',
+            'genres' => 'nullable|array',
+            'genres.*' => 'exists:genres,id',
         ]);
     }
 

@@ -24,7 +24,8 @@
                 <div class="flex flex-wrap gap-2 mb-2">
                     @php($statusBadge = ['active' => 'badge-success', 'concept' => 'badge-accent', 'archived' => 'badge-muted'][$world->status] ?? 'badge-muted')
                     <span class="{{ $statusBadge }}">{{ $world->statusLabel() }}</span>
-                    @foreach ($world->genres as $genre)
+                    {{-- Genres belong to the novel; shown here as inherited context. --}}
+                    @foreach ($world->novel?->genres ?? [] as $genre)
                         <span class="badge-accent">{{ $genre->name }}</span>
                     @endforeach
                 </div>

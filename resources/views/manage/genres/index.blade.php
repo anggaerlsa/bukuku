@@ -16,7 +16,7 @@
                     <tr class="text-left font-display text-xs uppercase tracking-wider text-ink-light border-b border-line/15">
                         <th class="px-4 py-3">Nama</th>
                         <th class="px-4 py-3 hidden sm:table-cell">Deskripsi</th>
-                        <th class="px-4 py-3">Dunia</th>
+                        <th class="px-4 py-3">Novel</th>
                         <th class="px-4 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -25,7 +25,7 @@
                         <tr class="hover:bg-surface-muted/40 transition">
                             <td class="px-4 py-3 font-display text-ink">{{ $genre->name }}</td>
                             <td class="px-4 py-3 hidden sm:table-cell text-ink-light">{{ $genre->description ?? '—' }}</td>
-                            <td class="px-4 py-3"><span class="badge-accent">{{ $genre->worlds_count }}</span></td>
+                            <td class="px-4 py-3"><span class="badge-accent">{{ $genre->novels_count }}</span></td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('genres.edit', $genre) }}" class="btn-outline btn-sm">Sunting</a>

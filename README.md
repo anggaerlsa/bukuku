@@ -8,9 +8,9 @@ Susunannya bertingkat: **Penulis → Novel → Dunia → lore (karakter & lokasi
 
 ## Fitur
 
-**Novel** — lapisan paling atas: judul, tagline, sinopsis, sampul, dan status. Sebuah novel tidak bisa dihapus selama masih menaungi dunia, supaya lorenya tidak ikut lenyap tanpa disadari.
+**Novel** — lapisan paling atas: judul, tagline, sinopsis, sampul, status, dan tag genre. Genre melekat di sini karena yang bergenre adalah bukunya, bukan latarnya. Sebuah novel tidak bisa dihapus selama masih menaungi dunia, supaya lorenya tidak ikut lenyap tanpa disadari.
 
-**Dunia** — sebuah latar milik satu novel, punya premis, sampul, status (Konsep / Aktif / Arsip), dan tag genre. Daftar dunia bisa disaring per novel.
+**Dunia** — sebuah latar milik satu novel, punya premis, sampul, dan status (Konsep / Aktif / Arsip); genrenya mewarisi dari novel induknya. Daftar dunia bisa disaring per novel.
 
 **Lokasi berjenjang lima tingkat** — Benua → Negara → Provinsi → Kota → Desa, ditampilkan sebagai pohon. Tiap tingkat punya **tabelnya sendiri** di database, bukan satu tabel dengan kolom `parent_id`. Tiap lokasi bisa diberi sebutan bebas sebagai identitas dalam dunia — tingkat *Provinsi* boleh tampil sebagai *Dukedom*, tingkat *Kota* sebagai *Metropolis* — tanpa mengubah strukturnya.
 

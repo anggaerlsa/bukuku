@@ -22,8 +22,9 @@ class Genre extends Model
         return 'slug';
     }
 
-    public function worlds(): BelongsToMany
+    /** Genre describes the book, so it hangs off the novel — not its worlds. */
+    public function novels(): BelongsToMany
     {
-        return $this->belongsToMany(World::class);
+        return $this->belongsToMany(Novel::class);
     }
 }

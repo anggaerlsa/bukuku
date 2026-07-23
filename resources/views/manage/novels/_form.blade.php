@@ -58,6 +58,28 @@
         @endif
     </div>
 
+    {{-- Genres describe the book, so they live here rather than on each world. --}}
+    <div>
+        <x-input-label value="Genre" />
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1 panel p-4 !shadow-none">
+            @forelse ($genres as $genre)
+                <label class="flex items-center gap-2 text-sm text-ink">
+                    <input type="checkbox" name="genres[]" value="{{ $genre->id }}"
+                           @checked(in_array($genre->id, old('genres', $selectedGenres)))
+                           class="rounded border-line/40 text-accent focus:ring-accent/50">
+                    {{ $genre->name }}
+                </label>
+            @empty
+                <p class="col-span-full text-sm text-ink-light">
+                    Belum ada genre.
+                    @can('manage genres')<a href="{{ route('genres.create') }}" class="text-ink underline hover:text-accent-dark">Tambah genre</a> lebih dulu bila perlu.@endcan
+                </p>
+            @endforelse
+        </div>
+        <p class="text-xs text-ink-light mt-1">Genre menempel pada novel — dunianya mewarisi dari sini.</p>
+        <x-input-error :messages="$errors->get('genres')" />
+    </div>
+
     <div class="flex items-center gap-3 pt-1">
         <x-primary-button>{{ $editing ? 'Simpan Perubahan' : 'Buat Novel' }}</x-primary-button>
         <a href="{{ $editing ? route('novels.show', $novel) : route('novels.index') }}" class="btn-outline">Batal</a>
