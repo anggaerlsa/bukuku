@@ -26,7 +26,7 @@ return [
         'name' => env('SEED_ADMIN_NAME', 'Admin'),
         'username' => env('SEED_ADMIN_USERNAME', 'admin'),
         'email' => env('SEED_ADMIN_EMAIL', 'admin@bukuku.test'),
-        'password' => env('SEED_ADMIN_PASSWORD', 'password'),
+        'password' => env('SEED_ADMIN_PASSWORD', 'admin123'),
     ],
 
     'author' => [
