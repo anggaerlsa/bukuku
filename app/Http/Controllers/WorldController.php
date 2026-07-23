@@ -1,0 +1,185 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Character;
+use App\Models\Genre;
+use App\Models\Image;
+use App\Models\World;
+use App\Support\Hierarchy;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+class WorldController extends Controller
+{
+    public function index(Request $request)
+    {
+        $this->authorize('viewAny', World::class);
+
+        $user = $request->user();
+        $query = World::withCount(['characters', 'benuas', 'negaras', 'provinsis', 'kotas', 'desas'])->with('genres')->latest();
+
+        if (! $user->can('manage worlds')) {
+            $query->where('user_id', $user->id);
+        }
+
+        if ($search = trim((string) $request->query('q', ''))) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $worlds = $query->paginate(12)->withQueryString();
+
+        return view('manage.worlds.index', compact('worlds', 'search'));
+    }
+
+    public function create()
+    {
+        $this->authorize('create', World::class);
+
+        return view('manage.worlds.create', [
+            'world' => new World(['status' => 'active']),
+            'genres' => Genre::orderBy('name')->get(),
+            'selectedGenres' => [],
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $this->authorize('create', World::class);
+
+        $data = $this->validateWorld($request);
+        $data['slug'] = $this->uniqueSlug($data['name']);
+        $data['user_id'] = $request->user()->id;
+        $data['cover_image'] = $this->resolveImage($request, 'cover_image', 'cover_url', 'covers', null);
+
+        $world = World::create($data);
+        $world->genres()->sync($request->input('genres', []));
+
+        return redirect()->route('worlds.show', $world)
+            ->with('status', "Dunia \"{$world->name}\" telah ditempa. Mulailah membangun lorenya!");
+    }
+
+    public function show(World $world)
+    {
+        $this->authorize('view', $world);
+
+        $world->load('genres', 'user')->loadCount('characters');
+        $characters = $world->characters()->latest()->take(6)->get();
+        $benuas = $world->benuas()->with('negaras.provinsis.kotas.desas')->orderBy('name')->get();
+        $locationsCount = $world->locationsCount();
+
+        return view('manage.worlds.show', compact('world', 'characters', 'benuas', 'locationsCount'));
+    }
+
+    public function edit(World $world)
+    {
+        $this->authorize('update', $world);
+
+        return view('manage.worlds.edit', [
+            'world' => $world,
+            'genres' => Genre::orderBy('name')->get(),
+            'selectedGenres' => $world->genres->pluck('id')->all(),
+        ]);
+    }
+
+    public function update(Request $request, World $world)
+    {
+        $this->authorize('update', $world);
+
+        $data = $this->validateWorld($request);
+        $data['slug'] = $this->uniqueSlug($data['name'], $world->id);
+        $data['cover_image'] = $this->resolveImage($request, 'cover_image', 'cover_url', 'covers', $world->cover_image);
+
+        $world->update($data);
+        $world->genres()->sync($request->input('genres', []));
+
+        return redirect()->route('worlds.show', $world)->with('status', "Dunia \"{$world->name}\" diperbarui.");
+    }
+
+    public function destroy(World $world)
+    {
+        $this->authorize('delete', $world);
+
+        if ($world->cover_image && ! Str::startsWith($world->cover_image, ['http://', 'https://'])) {
+            Storage::disk('public')->delete($world->cover_image);
+        }
+
+        // Gallery rows would vanish through the FK cascade without ever firing
+        // their deleting hook, stranding the uploaded files. Delete them first,
+        // scoped to this world only.
+        Image::where('world_id', $world->id)->get()->each->delete();
+
+        // Same story for the cover pictures held on the rows themselves —
+        // character portraits and every location tier's map. The cascade takes
+        // those rows silently too, so collect their files up front: this
+        // world only, uploads only (linked URLs are not ours to delete).
+        $paths = Character::where('world_id', $world->id)->pluck('portrait_image');
+
+        foreach (Hierarchy::MODELS as $model) {
+            $paths = $paths->concat($model::where('world_id', $world->id)->pluck('map_image'));
+        }
+
+        $uploaded = $paths
+            ->filter(fn (?string $path) => $path && ! Str::startsWith($path, ['http://', 'https://']))
+            ->values()
+            ->all();
+
+        if ($uploaded) {
+            Storage::disk('public')->delete($uploaded);
+        }
+
+        $name = $world->name;
+        $world->delete();
+
+        return redirect()->route('worlds.index')->with('status', "Dunia \"{$name}\" telah dilenyapkan beserta seluruh lorenya.");
+    }
+
+    private function validateWorld(Request $request): array
+    {
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'tagline' => 'nullable|string|max:255',
+            'premise' => 'nullable|string',
+            'status' => 'required|in:' . implode(',', array_keys(World::statuses())),
+            'cover_image' => 'nullable|image|max:2048',
+            'cover_url' => 'nullable|url|max:2048',
+            'genres' => 'nullable|array',
+            'genres.*' => 'exists:genres,id',
+        ]);
+    }
+
+    private function uniqueSlug(string $name, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($name) ?: 'dunia';
+        $slug = $base;
+        $i = 1;
+
+        while (
+            World::where('slug', $slug)
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $base . '-' . (++$i);
+        }
+
+        return $slug;
+    }
+
+    private function resolveImage(Request $request, string $fileField, string $urlField, string $dir, ?string $current): ?string
+    {
+        if ($request->hasFile($fileField)) {
+            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
+                Storage::disk('public')->delete($current);
+            }
+
+            return $request->file($fileField)->store($dir, 'public');
+        }
+
+        if ($url = trim((string) $request->input($urlField, ''))) {
+            return $url;
+        }
+
+        return $current;
+    }
+}

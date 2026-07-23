@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] { display: none !important; }
+
+/* ───────────────────────────  Base  ─────────────────────────── */
+@layer base {
+    body {
+        @apply font-sans text-ink bg-surface-muted antialiased;
+    }
+
+    h1, h2, h3, h4, h5 {
+        @apply font-display font-semibold tracking-tight;
+    }
+
+    ::selection {
+        background: rgba(79, 70, 229, 0.18);
+    }
+}
+
+/* ─────────────────────────  Components  ──────────────────────── */
+@layer components {
+    /* Buttons */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition duration-150 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed;
+    }
+    .btn-primary {
+        @apply btn bg-accent text-white shadow-sm hover:bg-accent-dark;
+    }
+    .btn-danger {
+        @apply btn bg-danger text-white shadow-sm hover:bg-danger-dark focus:ring-danger/40;
+    }
+    .btn-outline {
+        @apply btn bg-surface text-ink border border-line hover:bg-surface-muted hover:border-line-strong;
+    }
+    .btn-ghost {
+        @apply btn text-white/80 border border-white/15 hover:bg-white/10 hover:text-white;
+    }
+    .btn-sm {
+        @apply px-2.5 py-1.5 text-xs rounded-md;
+    }
+
+    /* Surfaces */
+    .panel {
+        @apply bg-surface border border-line rounded-xl shadow-card;
+    }
+    .panel-shell {
+        @apply bg-shell-dark text-white border border-white/10 rounded-xl;
+    }
+
+    /* Forms */
+    .label {
+        @apply block text-xs font-medium text-ink-light mb-1.5;
+    }
+    .input,
+    .select,
+    .textarea {
+        @apply w-full rounded-lg border-line bg-surface text-ink shadow-sm transition focus:border-accent focus:ring-2 focus:ring-accent/25 placeholder:text-ink-faint;
+    }
+
+    /* Badges */
+    .badge {
+        @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border;
+    }
+    .badge-accent  { @apply badge bg-accent-soft text-accent-dark border-accent/25; }
+    .badge-danger  { @apply badge bg-danger/10 text-danger border-danger/25; }
+    .badge-success { @apply badge bg-success/10 text-success border-success/25; }
+    .badge-muted   { @apply badge bg-surface-sunken text-ink-light border-line; }
+
+    /* Section divider */
+    .divider {
+        @apply flex items-center gap-3 text-ink-faint my-6;
+    }
+    .divider::before,
+    .divider::after {
+        content: '';
+        @apply h-px flex-1 bg-line;
+    }
+
+    /* Top navigation links (on dark chrome) */
+    .nav-top {
+        @apply inline-flex items-center gap-2 px-3 py-2 text-sm text-white/70 border-b-2 border-transparent hover:text-white transition;
+    }
+    .nav-top-active {
+        @apply text-white border-accent-light;
+    }
+
+    /* Card lift for lore entries (worlds, characters) */
+    .lore-card {
+        @apply panel overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-accent;
+    }
+}
+
+/* ─────────────────────────  Utilities  ──────────────────────── */
+@layer utilities {
+    .bg-shell {
+        @apply bg-shell-dark;
+    }
+}
