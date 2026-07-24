@@ -8,6 +8,7 @@ use App\Http\Controllers\GenreController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\LoreEntryController;
 use App\Http\Controllers\NovelController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationMemberController;
@@ -79,6 +80,14 @@ Route::middleware('auth')->group(function () {
             Route::put('/{tier}/{id}', [LocationController::class, 'update'])->name('locations.update')->whereIn('tier', $tiers)->whereNumber('id');
             Route::delete('/{tier}/{id}', [LocationController::class, 'destroy'])->name('locations.destroy')->whereIn('tier', $tiers)->whereNumber('id');
         });
+
+        // Lore articles — everything that is neither person, place nor faction.
+        // Param dinamai loreEntry, bukan lore: scoped binding mencari relasi
+        // dari bentuk jamak nama parameter, dan World punya loreEntries().
+        Route::resource('dunia.lore', LoreEntryController::class)
+            ->parameters(['dunia' => 'world', 'lore' => 'loreEntry'])
+            ->names('lore')
+            ->scoped();
 
         // Organisations (Organisasi) — factions, houses, armies, orders.
         Route::resource('dunia.organisasi', OrganizationController::class)

@@ -50,6 +50,7 @@ class CustomField extends Model
         $targets = [
             'character' => 'Karakter',
             'organization' => 'Organisasi',
+            'lore' => 'Artikel Lore',
             'location' => 'Lokasi (semua tingkat)',
         ];
 

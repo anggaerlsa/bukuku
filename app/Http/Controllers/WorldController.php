@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Character;
 use App\Models\Image;
+use App\Models\LoreEntry;
 use App\Models\Novel;
 use App\Models\Organization;
 use App\Models\World;
@@ -75,13 +76,15 @@ class WorldController extends Controller
     {
         $this->authorize('view', $world);
 
-        $world->load('user', 'novel.genres')->loadCount(['characters', 'organizations']);
+        $world->load('user', 'novel.genres')->loadCount(['characters', 'organizations', 'loreEntries']);
+        $loreByCategory = $world->loreEntries()->orderBy('category')->orderBy('title')
+            ->get()->groupBy(fn ($e) => $e->categoryLabel());
         $characters = $world->characters()->latest()->take(6)->get();
         $organizations = $world->organizations()->withCount('memberships')->with('parent')->orderBy('name')->take(6)->get();
         $benuas = $world->benuas()->with('negaras.provinsis.kotas.desas')->orderBy('name')->get();
         $locationsCount = $world->locationsCount();
 
-        return view('manage.worlds.show', compact('world', 'characters', 'organizations', 'benuas', 'locationsCount'));
+        return view('manage.worlds.show', compact('world', 'characters', 'organizations', 'loreByCategory', 'benuas', 'locationsCount'));
     }
 
     public function edit(World $world)
@@ -125,7 +128,8 @@ class WorldController extends Controller
         // those rows silently too, so collect their files up front: this
         // world only, uploads only (linked URLs are not ours to delete).
         $paths = Character::where('world_id', $world->id)->pluck('portrait_image')
-            ->concat(Organization::where('world_id', $world->id)->pluck('emblem_image'));
+            ->concat(Organization::where('world_id', $world->id)->pluck('emblem_image'))
+            ->concat(LoreEntry::where('world_id', $world->id)->pluck('cover_image'));
 
         foreach (Hierarchy::MODELS as $model) {
             $paths = $paths->concat($model::where('world_id', $world->id)->pluck('map_image'));

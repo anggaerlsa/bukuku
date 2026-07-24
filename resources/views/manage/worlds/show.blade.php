@@ -106,6 +106,48 @@
             @endif
         </section>
 
+        {{-- Lore --}}
+        <section>
+            <div class="flex items-center gap-3 mb-5">
+                <h2 class="font-display text-2xl text-ink">📖 Lore</h2>
+                <span class="badge-accent">{{ $world->lore_entries_count }}</span>
+                <span class="h-px flex-1 bg-shell/20"></span>
+                <a href="{{ route('lore.index', $world) }}" class="text-sm text-ink hover:text-accent-dark shrink-0">Lihat semua →</a>
+                @can('update', $world)
+                    <a href="{{ route('lore.create', $world) }}" class="btn-primary btn-sm shrink-0">✚ Artikel</a>
+                @endcan
+            </div>
+
+            @if ($loreByCategory->isEmpty())
+                <div class="panel p-8 text-center text-ink-light">
+                    Belum ada artikel lore — aturan sihir, panteon, glosarium, teknologi, doktrin.
+                    @can('update', $world)<a href="{{ route('lore.create', $world) }}" class="text-ink underline hover:text-accent-dark">Tulis yang pertama</a>.@endcan
+                </div>
+            @else
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($loreByCategory as $groupName => $group)
+                        <div class="panel p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <p class="label !mb-0">{{ $groupName }}</p>
+                                <span class="badge-muted">{{ $group->count() }}</span>
+                            </div>
+                            <ul class="space-y-1">
+                                @foreach ($group->take(5) as $entry)
+                                    <li>
+                                        <a href="{{ route('lore.show', [$world, $entry]) }}"
+                                           class="text-sm text-ink hover:text-accent-dark line-clamp-1">{{ $entry->title }}</a>
+                                    </li>
+                                @endforeach
+                                @if ($group->count() > 5)
+                                    <li class="text-xs text-ink-light">+{{ $group->count() - 5 }} lagi</li>
+                                @endif
+                            </ul>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
         {{-- Locations (hierarchy tree) --}}
         <section>
             <div class="flex items-center gap-3 mb-5">

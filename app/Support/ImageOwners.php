@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Character;
+use App\Models\LoreEntry;
 use App\Models\Organization;
 use App\Models\World;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ class ImageOwners
         return [
             'character' => Character::class,
             'organization' => Organization::class,
+            'lore' => LoreEntry::class,
         ] + Hierarchy::MODELS;
     }
 
@@ -44,6 +46,7 @@ class ImageOwners
         return match (true) {
             $owner instanceof Character => route('characters.show', [$world, $owner]),
             $owner instanceof Organization => route('organizations.show', [$world, $owner]),
+            $owner instanceof LoreEntry => route('lore.show', [$world, $owner]),
             default => route('locations.show', [$world, $owner->tierKey(), $owner->id]),
         };
     }

@@ -63,6 +63,11 @@ class World extends Model
         return $this->hasMany(Organization::class);
     }
 
+    public function loreEntries(): HasMany
+    {
+        return $this->hasMany(LoreEntry::class);
+    }
+
     /** Author-defined attributes belonging to this world only. */
     public function customFields(): HasMany
     {
