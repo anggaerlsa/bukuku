@@ -16,6 +16,7 @@
 
                     @hasanyrole('superadmin|admin|author')
                         <a href="{{ route('novels.index') }}" class="nav-top {{ request()->routeIs('novels.*') ? 'nav-top-active' : '' }}">Novel</a>
+                        <a href="{{ route('books.index') }}" class="nav-top {{ request()->routeIs('books.*') || request()->routeIs('chapters.*') ? 'nav-top-active' : '' }}">Buku</a>
                         <a href="{{ route('worlds.index') }}" class="nav-top {{ $inWorlds ? 'nav-top-active' : '' }}">Dunia</a>
                     @endhasanyrole
 
@@ -75,6 +76,7 @@
         <a href="{{ route('dashboard') }}" class="block nav-top {{ request()->routeIs('dashboard') ? 'nav-top-active' : '' }}">Dasbor</a>
         @hasanyrole('superadmin|admin|author')
             <a href="{{ route('novels.index') }}" class="block nav-top {{ request()->routeIs('novels.*') ? 'nav-top-active' : '' }}">Novel</a>
+            <a href="{{ route('books.index') }}" class="block nav-top {{ request()->routeIs('books.*') || request()->routeIs('chapters.*') ? 'nav-top-active' : '' }}">Buku</a>
             <a href="{{ route('worlds.index') }}" class="block nav-top {{ $inWorlds ? 'nav-top-active' : '' }}">Dunia</a>
         @endhasanyrole
         @can('manage genres')

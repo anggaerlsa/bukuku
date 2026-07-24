@@ -63,6 +63,18 @@ class Novel extends Model
         return $this->hasMany(World::class);
     }
 
+    /** The manuscript: volumes in reading order. */
+    public function books(): HasMany
+    {
+        return $this->hasMany(Book::class)->orderBy('position');
+    }
+
+    /** Every chapter of the novel, across all its volumes. */
+    public function chaptersCount(): int
+    {
+        return Chapter::whereIn('book_id', $this->books()->select('id'))->count();
+    }
+
     public function genres(): BelongsToMany
     {
         return $this->belongsToMany(Genre::class);

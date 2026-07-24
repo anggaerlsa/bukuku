@@ -86,7 +86,17 @@ class NovelController extends Controller
             ->latest()
             ->get();
 
-        return view('manage.novels.show', compact('novel', 'worlds'));
+        // The table of contents. Chapter bodies are left out deliberately —
+        // a novel of 73 episodes is well over half a million characters, and
+        // none of it is shown on this page.
+        $books = $novel->books()->withCount('chapters')->with(['chapters' => fn ($q) => $q->select(
+            'id', 'book_id', 'title', 'position', 'word_count'
+        )])->get();
+
+        $chaptersTotal = $books->sum('chapters_count');
+        $wordsTotal = $books->sum(fn ($book) => $book->chapters->sum('word_count'));
+
+        return view('manage.novels.show', compact('novel', 'worlds', 'books', 'chaptersTotal', 'wordsTotal'));
     }
 
     public function edit(Novel $novel)

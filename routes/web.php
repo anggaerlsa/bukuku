@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\BookController;
+use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\CharacterRelationController;
 use App\Http\Controllers\CustomFieldController;
@@ -49,6 +51,22 @@ Route::middleware(['auth', 'approved'])->group(function () {
         // Share a novel read-only with every signed-in member.
         Route::patch('novel/{novel}/bagikan', [NovelController::class, 'share'])
             ->name('novels.share');
+
+        // Buku — the manuscript itself: volumes of a novel, each holding the
+        // chapters in reading order. Shaped like Dunia rather than nested
+        // under the novel, so the URL stays short and the novel page is free
+        // to be the table of contents.
+        Route::resource('buku', BookController::class)
+            ->parameters(['buku' => 'book'])
+            ->names('books');
+
+        // Bab — nested in their book. Param dinamai `bab` → `chapter`, sebab
+        // scoped binding mencari relasi dari bentuk jamak nama parameter dan
+        // Book punya chapters().
+        Route::resource('buku.bab', ChapterController::class)
+            ->parameters(['buku' => 'book', 'bab' => 'chapter'])
+            ->names('chapters')
+            ->scoped();
 
         // Worlds (Dunia) — each a setting belonging to one novel.
         Route::resource('dunia', WorldController::class)

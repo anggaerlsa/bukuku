@@ -71,6 +71,74 @@
             </div>
         </div>
 
+        {{-- Daftar isi: buku novel ini beserta babnya, dalam urutan baca --}}
+        <section>
+            <div class="flex flex-wrap items-center gap-3 mb-5">
+                <h2 class="font-display text-2xl text-ink">📖 Buku</h2>
+                <span class="badge-accent">{{ $books->count() }}</span>
+                @if ($chaptersTotal > 0)
+                    <span class="text-sm text-ink-light">{{ $chaptersTotal }} bab · {{ number_format($wordsTotal) }} kata</span>
+                @endif
+                <span class="h-px flex-1 bg-shell/20"></span>
+                @can('update', $novel)
+                    <a href="{{ route('books.create') }}?novel={{ $novel->id }}" class="btn-primary btn-sm shrink-0">✚ Buku</a>
+                @endcan
+            </div>
+
+            @if ($books->isEmpty())
+                <div class="panel p-12 text-center">
+                    <p class="font-display text-xl text-ink">Novel ini belum punya buku.</p>
+                    <p class="text-ink-light mt-1">
+                        Buku adalah jilid tempat bab-babnya dibaca berurutan — satu novel bisa terbagi jadi beberapa jilid.
+                    </p>
+                    @can('update', $novel)
+                        <a href="{{ route('books.create') }}?novel={{ $novel->id }}" class="btn-primary mt-4">✚ Buku Pertama</a>
+                    @endcan
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach ($books as $book)
+                        <div class="panel overflow-hidden" x-data="{ buka: {{ $books->count() === 1 ? 'true' : 'false' }} }">
+                            <div class="flex flex-wrap items-center gap-3 px-5 py-4">
+                                <a href="{{ route('books.show', $book) }}" class="font-display text-lg text-ink hover:text-accent-dark">
+                                    {{ $book->title }}
+                                </a>
+                                <span class="badge-muted">{{ $book->statusLabel() }}</span>
+                                <span class="text-sm text-ink-light">{{ $book->chapters_count }} bab</span>
+                                <span class="h-px flex-1 bg-shell/20"></span>
+                                @if ($book->chapters_count > 0)
+                                    <button type="button" @click="buka = !buka" class="btn-ghost btn-sm">
+                                        <span x-show="!buka">Lihat daftar isi</span>
+                                        <span x-show="buka" x-cloak>Sembunyikan</span>
+                                    </button>
+                                @endif
+                                @can('update', $novel)
+                                    <a href="{{ route('chapters.create', $book) }}" class="btn-outline btn-sm">✚ Bab</a>
+                                @endcan
+                            </div>
+
+                            @if ($book->chapters_count > 0)
+                                <ol x-show="buka" x-cloak class="divide-y divide-line/30 border-t border-line/30">
+                                    @foreach ($book->chapters as $chapter)
+                                        <li>
+                                            <a href="{{ route('chapters.show', [$book, $chapter]) }}"
+                                               class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 py-3 hover:bg-accent-soft">
+                                                <span class="text-xs text-ink-faint tabular-nums w-8 shrink-0">{{ $chapter->position }}</span>
+                                                <span class="text-ink flex-1 min-w-0">{{ $chapter->title }}</span>
+                                                <span class="text-xs text-ink-light shrink-0">
+                                                    {{ number_format($chapter->word_count) }} kata · {{ $chapter->readingMinutes() }} mnt
+                                                </span>
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ol>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
         {{-- Worlds belonging to this novel --}}
         <section>
             <div class="flex flex-wrap items-center gap-3 mb-5">
