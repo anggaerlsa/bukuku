@@ -59,7 +59,31 @@ class NovelTheme
             'body' => 'Barlow',
             'swatches' => ['#4d7c0f', '#84cc16', '#1c1f16', '#f1f2ea'],
         ],
+        'horror' => [
+            'label' => 'Horor',
+            'blurb' => 'Satu-satunya tema gelap: latar nyaris hitam, merah darah, dan serif tinggi yang dingin.',
+            'fonts' => 'Cormorant+Garamond:wght@500;600;700&family=Crimson+Pro:wght@400;500;600',
+            'display' => 'Cormorant Garamond',
+            'body' => 'Crimson Pro',
+            'swatches' => ['#b91c1c', '#f87171', '#e8e0dd', '#0f0c0c'],
+        ],
+        'romance' => [
+            'label' => 'Romantis',
+            'blurb' => 'Merah muda lembut, kertas hangat, dan serif anggun. Untuk kisah cinta dan drama.',
+            'fonts' => 'Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600',
+            'display' => 'Playfair Display',
+            'body' => 'Lora',
+            'swatches' => ['#be185d', '#f472b6', '#3d2530', '#fdf2f5'],
+        ],
     ];
+
+    /** Themes that invert the page — light text on a dark ground. */
+    public const DARK = ['horror'];
+
+    public static function isDark(?string $key): bool
+    {
+        return in_array(self::key($key), self::DARK, true);
+    }
 
     /** @return list<string> */
     public static function keys(): array

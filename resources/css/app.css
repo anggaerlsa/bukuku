@@ -110,6 +110,61 @@
     --c-shell-dark: 28 32 23;
 }
 
+/* Satu-satunya tema gelap: surface justru lebih terang dari latar halaman,
+   dan --c-accent-dark sengaja LEBIH TERANG dari --c-accent karena token itu
+   dipakai sebagai warna teks di atas --c-accent-soft. */
+:root[data-theme="horror"] {
+    /* Biar kontrol bawaan peramban (scrollbar, checkbox, date picker) ikut gelap */
+    color-scheme: dark;
+
+    --font-sans: 'Crimson Pro';
+    --font-display: 'Cormorant Garamond';
+    --font-serif: 'Cormorant Garamond';
+
+    --c-surface: 26 21 21;
+    --c-surface-muted: 15 12 12;
+    --c-surface-sunken: 35 28 28;
+    --c-ink: 232 224 221;
+    --c-ink-light: 162 147 143;
+    --c-ink-faint: 111 98 95;
+    --c-line: 58 47 47;
+    --c-line-strong: 82 66 66;
+    --c-accent: 185 28 28;
+    --c-accent-light: 239 68 68;
+    --c-accent-dark: 248 113 113;
+    --c-accent-soft: 44 20 20;
+    --c-danger: 239 68 68;
+    --c-danger-dark: 248 113 113;
+    --c-success: 34 197 94;
+    --c-shell: 10 7 7;
+    --c-shell-dark: 5 3 3;
+}
+
+/* Blush & kertas hangat */
+:root[data-theme="romance"] {
+    --font-sans: 'Lora';
+    --font-display: 'Playfair Display';
+    --font-serif: 'Lora';
+
+    --c-surface: 255 250 251;
+    --c-surface-muted: 253 242 245;
+    --c-surface-sunken: 248 228 234;
+    --c-ink: 61 37 48;
+    --c-ink-light: 138 107 118;
+    --c-ink-faint: 183 154 164;
+    --c-line: 243 217 225;
+    --c-line-strong: 230 188 201;
+    --c-accent: 190 24 93;
+    --c-accent-light: 244 114 182;
+    --c-accent-dark: 157 23 77;
+    --c-accent-soft: 253 242 248;
+    --c-danger: 220 38 38;
+    --c-danger-dark: 185 28 28;
+    --c-success: 5 150 105;
+    --c-shell: 74 43 57;
+    --c-shell-dark: 53 32 43;
+}
+
 /* ───────────────────────────  Base  ─────────────────────────── */
 @layer base {
     body {
