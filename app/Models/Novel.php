@@ -23,6 +23,7 @@ class Novel extends Model
         'synopsis',
         'cover_image',
         'status',
+        'theme',
         'is_shared',
         'shared_at',
     ];
@@ -70,6 +71,11 @@ class Novel extends Model
     public function statusLabel(): string
     {
         return static::statuses()[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function themeLabel(): string
+    {
+        return \App\Support\NovelTheme::label($this->theme);
     }
 
     /** Novels other members are allowed to read. */

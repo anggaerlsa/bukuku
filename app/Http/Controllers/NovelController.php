@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Genre;
 use App\Models\Novel;
+use App\Support\NovelTheme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * Novels — the layer above worlds. A novel is the book; its worlds are the
@@ -51,7 +53,7 @@ class NovelController extends Controller
         $this->authorize('create', Novel::class);
 
         return view('manage.novels.create', [
-            'novel' => new Novel(['status' => 'active']),
+            'novel' => new Novel(['status' => 'active', 'theme' => NovelTheme::DEFAULT]),
             'genres' => Genre::orderBy('name')->get(),
             'selectedGenres' => [],
         ]);
@@ -64,6 +66,7 @@ class NovelController extends Controller
         $data = $this->validateNovel($request);
         $data['slug'] = $this->uniqueSlug($data['title']);
         $data['user_id'] = $request->user()->id;
+        $data['theme'] = NovelTheme::key($data['theme'] ?? null);
         $data['cover_image'] = $this->resolveImage($request, null);
 
         $novel = Novel::create($data);
@@ -103,6 +106,7 @@ class NovelController extends Controller
 
         $data = $this->validateNovel($request, $novel);
         $data['slug'] = $this->uniqueSlug($data['title'], $novel->id);
+        $data['theme'] = NovelTheme::key($data['theme'] ?? $novel->theme);
         $data['cover_image'] = $this->resolveImage($request, $novel->cover_image);
 
         $novel->update($data);
@@ -158,6 +162,9 @@ class NovelController extends Controller
             'tagline' => 'nullable|string|max:255',
             'synopsis' => 'nullable|string',
             'status' => 'required|in:' . implode(',', array_keys(Novel::statuses())),
+            // Optional on purpose: anything that does not pick a theme simply
+            // gets the neutral default rather than failing validation.
+            'theme' => ['nullable', Rule::in(NovelTheme::keys())],
             'cover_image' => 'nullable|image|max:2048',
             'cover_url' => 'nullable|url|max:2048',
             'genres' => 'nullable|array',

@@ -58,6 +58,40 @@
         @endif
     </div>
 
+    {{-- Theme: repaints this novel and every page under it --}}
+    <div>
+        <x-input-label value="Tema Tampilan" />
+        <p class="text-xs text-ink-light mt-0.5 mb-2">
+            Mengubah font dan warna saat novel ini dan seluruh isinya dibuka — dunia, lokasi, karakter, galeri.
+            Tidak memengaruhi novel lain.
+        </p>
+        @php($chosen = old('theme', $novel->theme ?? \App\Support\NovelTheme::DEFAULT))
+        <div class="grid gap-3 sm:grid-cols-2">
+            @foreach (\App\Support\NovelTheme::THEMES as $key => $t)
+                <label class="panel p-4 cursor-pointer block transition hover:shadow-accent
+                              {{ $chosen === $key ? 'ring-2 ring-accent' : '' }}">
+                    <div class="flex items-start gap-3">
+                        <input type="radio" name="theme" value="{{ $key }}" @checked($chosen === $key)
+                               class="mt-1 border-line/60 text-accent focus:ring-accent/50">
+                        <div class="min-w-0 flex-1">
+                            <span class="font-display text-ink" style="font-family: '{{ $t['display'] }}', serif;">
+                                {{ $t['label'] }}
+                            </span>
+                            <p class="text-xs text-ink-light mt-0.5">{{ $t['blurb'] }}</p>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                @foreach ($t['swatches'] as $swatch)
+                                    <span class="h-5 w-5 rounded-full border border-black/10" style="background: {{ $swatch }}"></span>
+                                @endforeach
+                                <span class="text-xs text-ink-faint ml-1">{{ $t['display'] }} · {{ $t['body'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            @endforeach
+        </div>
+        <x-input-error :messages="$errors->get('theme')" />
+    </div>
+
     {{-- Genres describe the book, so they live here rather than on each world. --}}
     <div>
         <x-input-label value="Genre" />

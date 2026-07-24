@@ -1,5 +1,6 @@
+@php($novelTheme = $novelTheme ?? \App\Support\NovelTheme::DEFAULT)
 <!DOCTYPE html>
-<html lang="id" class="scroll-smooth">
+<html lang="id" class="scroll-smooth" data-theme="{{ $novelTheme }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,9 +8,10 @@
 
         <title>{{ config('app.name', 'Bukuku') }}</title>
 
+        {{-- Only the active theme's fonts are fetched. --}}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+        <link href="{{ \App\Support\NovelTheme::fontUrl($novelTheme) }}" rel="stylesheet">
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

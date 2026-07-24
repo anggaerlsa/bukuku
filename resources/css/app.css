@@ -4,6 +4,112 @@
 
 [x-cloak] { display: none !important; }
 
+/* ──────────────────────  Novel themes  ───────────────────────
+   Every colour and font in the app resolves through these variables
+   (see tailwind.config.js), so setting data-theme on <html> repaints
+   the whole page — panels, badges, buttons, shadows and all.
+   Keys must match App\Support\NovelTheme::THEMES.
+   ───────────────────────────────────────────────────────────── */
+:root,
+:root[data-theme="normal"] {
+    --font-sans: 'Inter';
+    --font-display: 'Inter';
+    --font-serif: 'Source Serif 4';
+
+    --c-surface: 255 255 255;
+    --c-surface-muted: 244 245 247;
+    --c-surface-sunken: 236 238 242;
+    --c-ink: 17 24 39;
+    --c-ink-light: 107 114 128;
+    --c-ink-faint: 156 163 175;
+    --c-line: 229 231 235;
+    --c-line-strong: 209 213 219;
+    --c-accent: 79 70 229;
+    --c-accent-light: 129 140 248;
+    --c-accent-dark: 67 56 202;
+    --c-accent-soft: 238 242 255;
+    --c-danger: 220 38 38;
+    --c-danger-dark: 185 28 28;
+    --c-success: 5 150 105;
+    --c-shell: 31 41 55;
+    --c-shell-dark: 17 24 39;
+}
+
+/* Perkamen & emas — hanya untuk novel yang memilihnya, bukan tema aplikasi */
+:root[data-theme="fantasy"] {
+    --font-sans: 'EB Garamond';
+    --font-display: 'Cinzel';
+    --font-serif: 'EB Garamond';
+
+    --c-surface: 255 253 247;
+    --c-surface-muted: 247 241 227;
+    --c-surface-sunken: 239 230 210;
+    --c-ink: 47 37 25;
+    --c-ink-light: 107 90 69;
+    --c-ink-faint: 156 138 114;
+    --c-line: 227 214 189;
+    --c-line-strong: 205 186 152;
+    --c-accent: 161 98 7;
+    --c-accent-light: 212 164 55;
+    --c-accent-dark: 133 77 14;
+    --c-accent-soft: 253 246 227;
+    --c-danger: 159 34 34;
+    --c-danger-dark: 127 26 26;
+    --c-success: 77 124 15;
+    --c-shell: 59 47 34;
+    --c-shell-dark: 42 33 24;
+}
+
+/* Baja & neon dingin */
+:root[data-theme="scifi"] {
+    --font-sans: 'Space Grotesk';
+    --font-display: 'Orbitron';
+    --font-serif: 'Space Grotesk';
+
+    --c-surface: 248 251 253;
+    --c-surface-muted: 238 244 248;
+    --c-surface-sunken: 226 235 242;
+    --c-ink: 15 27 38;
+    --c-ink-light: 82 105 122;
+    --c-ink-faint: 139 160 174;
+    --c-line: 211 225 234;
+    --c-line-strong: 179 199 213;
+    --c-accent: 8 145 178;
+    --c-accent-light: 34 211 238;
+    --c-accent-dark: 14 116 144;
+    --c-accent-soft: 236 254 255;
+    --c-danger: 225 29 72;
+    --c-danger-dark: 190 18 60;
+    --c-success: 13 148 136;
+    --c-shell: 15 34 49;
+    --c-shell-dark: 7 22 32;
+}
+
+/* Zaitun & kanvas lapangan */
+:root[data-theme="military"] {
+    --font-sans: 'Barlow';
+    --font-display: 'Oswald';
+    --font-serif: 'Barlow';
+
+    --c-surface: 251 251 247;
+    --c-surface-muted: 241 242 234;
+    --c-surface-sunken: 229 231 219;
+    --c-ink: 28 31 22;
+    --c-ink-light: 92 97 82;
+    --c-ink-faint: 141 147 130;
+    --c-line: 220 223 208;
+    --c-line-strong: 194 199 178;
+    --c-accent: 77 124 15;
+    --c-accent-light: 132 204 22;
+    --c-accent-dark: 63 98 18;
+    --c-accent-soft: 242 247 230;
+    --c-danger: 180 45 24;
+    --c-danger-dark: 146 36 19;
+    --c-success: 21 128 61;
+    --c-shell: 42 46 34;
+    --c-shell-dark: 28 32 23;
+}
+
 /* ───────────────────────────  Base  ─────────────────────────── */
 @layer base {
     body {
@@ -15,7 +121,7 @@
     }
 
     ::selection {
-        background: rgba(79, 70, 229, 0.18);
+        background: rgb(var(--c-accent) / 0.18);
     }
 }
 

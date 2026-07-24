@@ -48,6 +48,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="{{ $statusBadge }}">{{ $novel->statusLabel() }}</span>
                     @if ($novel->is_shared)<span class="badge-success">🔗 Dibagikan</span>@endif
+                    <span class="badge-muted">🎨 {{ $novel->themeLabel() }}</span>
                     @foreach ($novel->genres as $genre)
                         <span class="badge-accent">{{ $genre->name }}</span>
                     @endforeach
