@@ -7,9 +7,8 @@ use App\Models\LoreEntry;
 use App\Models\World;
 use App\Support\CustomFieldInput;
 use App\Support\LoreCategories;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * Lore articles — the catch-all for what is neither person, place nor faction.
@@ -120,9 +119,7 @@ class LoreEntryController extends Controller
     {
         $this->authorize('update', $world);
 
-        if ($loreEntry->cover_image && ! Str::startsWith($loreEntry->cover_image, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($loreEntry->cover_image);
-        }
+        Uploads::delete($loreEntry->cover_image);
 
         $title = $loreEntry->title;
         $loreEntry->delete();
@@ -168,11 +165,9 @@ class LoreEntryController extends Controller
     private function resolveImage(Request $request, ?string $current): ?string
     {
         if ($request->hasFile('cover_image')) {
-            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($current);
-            }
+            Uploads::delete($current);
 
-            return $request->file('cover_image')->store('lore', 'public');
+            return Uploads::store($request->file('cover_image'), 'lore');
         }
 
         if ($url = trim((string) $request->input('cover_url', ''))) {

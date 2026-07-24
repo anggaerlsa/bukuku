@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Genre;
 use App\Models\Novel;
 use App\Support\NovelTheme;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -145,9 +145,7 @@ class NovelController extends Controller
             return back()->with('error', "Novel ini masih memiliki {$count} dunia. Pindahkan atau hapus dunianya lebih dahulu.");
         }
 
-        if ($novel->cover_image && ! Str::startsWith($novel->cover_image, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($novel->cover_image);
-        }
+        Uploads::delete($novel->cover_image);
 
         $title = $novel->title;
         $novel->delete();
@@ -192,11 +190,9 @@ class NovelController extends Controller
     private function resolveImage(Request $request, ?string $current): ?string
     {
         if ($request->hasFile('cover_image')) {
-            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($current);
-            }
+            Uploads::delete($current);
 
-            return $request->file('cover_image')->store('novels', 'public');
+            return Uploads::store($request->file('cover_image'), 'novels');
         }
 
         if ($url = trim((string) $request->input('cover_url', ''))) {

@@ -7,9 +7,8 @@ use App\Models\Organization;
 use App\Models\World;
 use App\Support\CustomFieldInput;
 use App\Support\LocationLookup;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -124,9 +123,7 @@ class OrganizationController extends Controller
             return back()->with('error', "Organisasi ini masih menaungi {$count} sub-organisasi. Pindahkan atau hapus dulu.");
         }
 
-        if ($organization->emblem_image && ! Str::startsWith($organization->emblem_image, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($organization->emblem_image);
-        }
+        Uploads::delete($organization->emblem_image);
 
         $name = $organization->name;
         $organization->delete();
@@ -199,11 +196,9 @@ class OrganizationController extends Controller
     private function resolveImage(Request $request, ?string $current): ?string
     {
         if ($request->hasFile('emblem_image')) {
-            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($current);
-            }
+            Uploads::delete($current);
 
-            return $request->file('emblem_image')->store('lambang', 'public');
+            return Uploads::store($request->file('emblem_image'), 'lambang');
         }
 
         if ($url = trim((string) $request->input('emblem_url', ''))) {

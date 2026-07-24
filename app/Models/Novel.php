@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -97,10 +97,6 @@ class Novel extends Model
                 . urlencode(Str::limit($this->title, 24, '…'));
         }
 
-        if (Str::startsWith($this->cover_image, ['http://', 'https://'])) {
-            return $this->cover_image;
-        }
-
-        return Storage::disk('public')->url($this->cover_image);
+        return Uploads::url($this->cover_image);
     }
 }

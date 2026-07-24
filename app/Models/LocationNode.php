@@ -5,12 +5,11 @@ namespace App\Models;
 use App\Models\Concerns\HasCustomFields;
 use App\Models\Concerns\HasImages;
 use App\Support\Hierarchy;
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * Shared behaviour for every location tier. Each concrete tier (Benua,
@@ -127,10 +126,6 @@ abstract class LocationNode extends Model
             return null;
         }
 
-        if (Str::startsWith($this->map_image, ['http://', 'https://'])) {
-            return $this->map_image;
-        }
-
-        return Storage::disk('public')->url($this->map_image);
+        return Uploads::url($this->map_image);
     }
 }

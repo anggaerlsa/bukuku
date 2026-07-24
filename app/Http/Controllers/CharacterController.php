@@ -7,9 +7,8 @@ use App\Models\CustomField;
 use App\Models\World;
 use App\Support\CustomFieldInput;
 use App\Support\LocationLookup;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class CharacterController extends Controller
 {
@@ -125,9 +124,7 @@ class CharacterController extends Controller
     {
         $this->authorize('update', $world);
 
-        if ($character->portrait_image && ! Str::startsWith($character->portrait_image, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($character->portrait_image);
-        }
+        Uploads::delete($character->portrait_image);
 
         $name = $character->name;
         $character->delete();
@@ -188,11 +185,9 @@ class CharacterController extends Controller
     private function resolveImage(Request $request, ?string $current): ?string
     {
         if ($request->hasFile('portrait_image')) {
-            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($current);
-            }
+            Uploads::delete($current);
 
-            return $request->file('portrait_image')->store('portraits', 'public');
+            return Uploads::store($request->file('portrait_image'), 'portraits');
         }
 
         if ($url = trim((string) $request->input('portrait_url', ''))) {

@@ -9,8 +9,8 @@ use App\Models\Novel;
 use App\Models\Organization;
 use App\Models\World;
 use App\Support\Hierarchy;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -114,9 +114,7 @@ class WorldController extends Controller
     {
         $this->authorize('delete', $world);
 
-        if ($world->cover_image && ! Str::startsWith($world->cover_image, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($world->cover_image);
-        }
+        Uploads::delete($world->cover_image);
 
         // Gallery rows would vanish through the FK cascade without ever firing
         // their deleting hook, stranding the uploaded files. Delete them first,
@@ -125,8 +123,9 @@ class WorldController extends Controller
 
         // Same story for the cover pictures held on the rows themselves —
         // character portraits and every location tier's map. The cascade takes
-        // those rows silently too, so collect their files up front: this
-        // world only, uploads only (linked URLs are not ours to delete).
+        // those rows silently too, so collect their files up front, scoped to
+        // this world. Uploads::delete() drops the linked URLs among them,
+        // which are not ours to remove.
         $paths = Character::where('world_id', $world->id)->pluck('portrait_image')
             ->concat(Organization::where('world_id', $world->id)->pluck('emblem_image'))
             ->concat(LoreEntry::where('world_id', $world->id)->pluck('cover_image'));
@@ -135,14 +134,7 @@ class WorldController extends Controller
             $paths = $paths->concat($model::where('world_id', $world->id)->pluck('map_image'));
         }
 
-        $uploaded = $paths
-            ->filter(fn (?string $path) => $path && ! Str::startsWith($path, ['http://', 'https://']))
-            ->values()
-            ->all();
-
-        if ($uploaded) {
-            Storage::disk('public')->delete($uploaded);
-        }
+        Uploads::delete($paths->all());
 
         $name = $world->name;
         $world->delete();
@@ -201,11 +193,9 @@ class WorldController extends Controller
     private function resolveImage(Request $request, string $fileField, string $urlField, string $dir, ?string $current): ?string
     {
         if ($request->hasFile($fileField)) {
-            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($current);
-            }
+            Uploads::delete($current);
 
-            return $request->file($fileField)->store($dir, 'public');
+            return Uploads::store($request->file($fileField), $dir);
         }
 
         if ($url = trim((string) $request->input($urlField, ''))) {

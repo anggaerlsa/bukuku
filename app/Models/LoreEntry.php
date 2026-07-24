@@ -4,10 +4,9 @@ namespace App\Models;
 
 use App\Models\Concerns\HasCustomFields;
 use App\Models\Concerns\HasImages;
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * A free-form lore article: a magic system, a pantheon, a glossary, a piece of
@@ -63,10 +62,6 @@ class LoreEntry extends Model
             return null;
         }
 
-        if (Str::startsWith($this->cover_image, ['http://', 'https://'])) {
-            return $this->cover_image;
-        }
-
-        return Storage::disk('public')->url($this->cover_image);
+        return Uploads::url($this->cover_image);
     }
 }

@@ -4,11 +4,11 @@ namespace App\Models;
 
 use App\Models\Concerns\HasCustomFields;
 use App\Models\Concerns\HasImages;
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -105,10 +105,6 @@ class Organization extends Model
                 . urlencode(Str::of($this->name)->explode(' ')->map(fn ($p) => Str::substr($p, 0, 1))->take(2)->implode(''));
         }
 
-        if (Str::startsWith($this->emblem_image, ['http://', 'https://'])) {
-            return $this->emblem_image;
-        }
-
-        return Storage::disk('public')->url($this->emblem_image);
+        return Uploads::url($this->emblem_image);
     }
 }

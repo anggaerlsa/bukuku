@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Image;
 use App\Models\World;
 use App\Support\ImageOwners;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
 
 /**
@@ -39,7 +40,7 @@ class ImageController extends Controller
         foreach ($request->file('images', []) as $file) {
             $owner->images()->create([
                 'world_id' => $world->id,
-                'path' => $file->store('galeri', 'public'),
+                'path' => Uploads::store($file, 'galeri'),
                 'caption' => $caption,
                 'position' => $position++,
             ]);

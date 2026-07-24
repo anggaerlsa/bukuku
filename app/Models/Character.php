@@ -4,13 +4,13 @@ namespace App\Models;
 
 use App\Models\Concerns\HasCustomFields;
 use App\Models\Concerns\HasImages;
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Character extends Model
@@ -181,10 +181,6 @@ class Character extends Model
                 . urlencode(Str::of($this->name)->explode(' ')->map(fn ($p) => Str::substr($p, 0, 1))->take(2)->implode(''));
         }
 
-        if (Str::startsWith($this->portrait_image, ['http://', 'https://'])) {
-            return $this->portrait_image;
-        }
-
-        return Storage::disk('public')->url($this->portrait_image);
+        return Uploads::url($this->portrait_image);
     }
 }

@@ -7,9 +7,8 @@ use App\Models\World;
 use App\Support\CustomFieldInput;
 use App\Support\Hierarchy;
 use App\Support\LocationFilter;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class LocationController extends Controller
@@ -155,9 +154,7 @@ class LocationController extends Controller
             return back()->with('error', 'Lokasi ini memiliki sub-lokasi. Hapus atau pindahkan sub-lokasinya terlebih dahulu.');
         }
 
-        if ($node->map_image && ! Str::startsWith($node->map_image, ['http://', 'https://'])) {
-            Storage::disk('public')->delete($node->map_image);
-        }
+        Uploads::delete($node->map_image);
 
         $name = $node->name;
         $node->delete();
@@ -238,11 +235,9 @@ class LocationController extends Controller
     private function resolveImage(Request $request, ?string $current): ?string
     {
         if ($request->hasFile('map_image')) {
-            if ($current && ! Str::startsWith($current, ['http://', 'https://'])) {
-                Storage::disk('public')->delete($current);
-            }
+            Uploads::delete($current);
 
-            return $request->file('map_image')->store('maps', 'public');
+            return Uploads::store($request->file('map_image'), 'maps');
         }
 
         if ($url = trim((string) $request->input('map_url', ''))) {
