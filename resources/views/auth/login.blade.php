@@ -10,7 +10,7 @@
 
         <div>
             <x-input-label for="login" :value="__('Email atau Username')" />
-            <x-text-input id="login" class="mt-1" type="text" name="login" :value="old('login')" required autofocus autocomplete="username" placeholder="cth. angga" />
+            <x-text-input id="login" class="mt-1" type="text" name="login" :value="old('login')" required autofocus autocomplete="username" placeholder="cth. user" />
             <x-input-error :messages="$errors->get('login')" />
         </div>
 

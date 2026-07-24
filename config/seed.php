@@ -5,10 +5,11 @@
 | Seeded accounts
 |--------------------------------------------------------------------------
 |
-| Registration is disabled, so the starting accounts are seeded instead.
+| The accounts a fresh install starts with, before anyone registers.
 | Their addresses and passwords are read from the environment so real
 | credentials never live in the repository — set them in .env, which is
-| git-ignored. The defaults below are safe demo values for a fresh clone.
+| git-ignored. The defaults below are safe demo values for a fresh clone;
+| keep them generic, never a real person's name or address.
 |
 | Read through config (not env() directly in the seeder) so the values
 | survive `php artisan config:cache`.
