@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -25,6 +26,16 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
+        'status',
+        'approved_at',
+        'approved_by',
+    ];
+
+    /** Account states. Only `active` may use the app. */
+    public const STATUSES = [
+        'pending' => 'Menunggu Persetujuan',
+        'active' => 'Aktif',
+        'rejected' => 'Ditolak',
     ];
 
     /**
@@ -46,6 +57,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'approved_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -56,6 +68,38 @@ class User extends Authenticatable
     public function worlds(): HasMany
     {
         return $this->hasMany(World::class);
+    }
+
+    /** Who approved this account, if anyone. */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'approved_by');
+    }
+
+    /** Only an approved account may leave the waiting page. */
+    public function isApproved(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
+    }
+
+    public function statusLabel(): string
+    {
+        return self::STATUSES[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
     }
 
     /**

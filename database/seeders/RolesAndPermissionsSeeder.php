@@ -15,6 +15,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $permissions = [
             'manage users',
+            'approve users',   // let a pending registration into the app
             'manage roles',
             'manage genres',
             'manage novels',   // manage every novel, not just your own
@@ -35,7 +36,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $superadmin = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
         $superadmin->syncPermissions($permissions);
 
-        // Admin — manages all novels, worlds, genres, and users.
+        // Admin — manages all novels, worlds, genres, and users, but NOT
+        // approvals: letting a new account in is the superadmin's call.
         $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $admin->syncPermissions([
             'manage users',

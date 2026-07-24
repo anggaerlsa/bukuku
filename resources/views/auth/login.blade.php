@@ -36,5 +36,13 @@
         <x-primary-button class="w-full justify-center !py-3 text-sm">
             Masuk
         </x-primary-button>
+
+        @if (Route::has('register'))
+            <p class="text-center text-sm text-ink-light">
+                Belum punya akun?
+                <a href="{{ route('register') }}" class="text-ink underline hover:text-accent-dark">Daftar</a>
+                — perlu persetujuan superadmin sebelum aktif.
+            </p>
+        @endif
     </form>
 </x-guest-layout>

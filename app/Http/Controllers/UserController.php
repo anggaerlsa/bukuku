@@ -13,9 +13,46 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')->orderBy('name')->paginate(15);
+        // Pendaftar yang menunggu ditarik ke atas, terpisah dari daftar biasa —
+        // itu satu-satunya bagian yang menuntut tindakan.
+        $pending = User::with('roles')->pending()->orderBy('created_at')->get();
+        $users = User::with('roles', 'approver')->where('status', '!=', 'pending')
+            ->orderBy('name')->paginate(15);
 
-        return view('manage.users.index', compact('users'));
+        return view('manage.users.index', compact('users', 'pending'));
+    }
+
+    /**
+     * Let a pending registration into the app, or turn it away. Gated by
+     * `approve users`, a permission only the superadmin role holds.
+     */
+    public function approve(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'decision' => ['required', Rule::in(['approve', 'reject'])],
+        ]);
+
+        if ($user->id === $request->user()->id) {
+            return back()->with('error', 'Tidak bisa menyetujui akunmu sendiri.');
+        }
+
+        if ($data['decision'] === 'approve') {
+            $user->update([
+                'status' => 'active',
+                'approved_at' => now(),
+                'approved_by' => $request->user()->id,
+            ]);
+
+            return back()->with('status', "Akun \"{$user->name}\" disetujui dan kini bisa masuk.");
+        }
+
+        $user->update([
+            'status' => 'rejected',
+            'approved_at' => null,
+            'approved_by' => $request->user()->id,
+        ]);
+
+        return back()->with('status', "Pendaftaran \"{$user->name}\" ditolak.");
     }
 
     public function create()
@@ -43,6 +80,10 @@ class UserController extends Controller
             'email' => $data['email'],
             'password' => $data['password'],
             'email_verified_at' => now(),
+            // Dibuat langsung oleh admin, jadi tak perlu antre persetujuan.
+            'status' => 'active',
+            'approved_at' => now(),
+            'approved_by' => $request->user()->id,
         ]);
         $user->syncRoles([$data['role']]);
 

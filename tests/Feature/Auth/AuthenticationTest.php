@@ -17,12 +17,25 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate_with_their_email(): void
     {
         $user = User::factory()->create();
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_users_can_authenticate_with_their_username(): void
+    {
+        User::factory()->create(['username' => 'penulis']);
+
+        $response = $this->post('/login', [
+            'login' => 'penulis',
             'password' => 'password',
         ]);
 
@@ -35,11 +48,28 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_a_pending_account_signs_in_but_is_held_on_the_waiting_page(): void
+    {
+        $user = User::factory()->pending()->create();
+
+        $response = $this->post('/login', [
+            'login' => $user->email,
+            'password' => 'password',
+        ]);
+
+        // The credentials are valid, so signing in itself succeeds; the
+        // `approved` middleware is what keeps the account out of the app.
+        $this->assertAuthenticated();
+        $this->followingRedirects()
+            ->get('/dashboard')
+            ->assertSee('Menunggu Persetujuan');
     }
 
     public function test_users_can_logout(): void

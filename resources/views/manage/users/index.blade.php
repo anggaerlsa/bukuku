@@ -19,6 +19,54 @@
     @endphp
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-5">
+        {{-- Pendaftar yang menunggu: satu-satunya bagian yang menuntut tindakan --}}
+        @if ($pending->isNotEmpty())
+            <section class="panel border-l-4 border-accent p-5 space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h2 class="font-display text-xl text-ink">⏳ Menunggu Persetujuan</h2>
+                    <span class="badge-accent">{{ $pending->count() }}</span>
+                </div>
+                @cannot('approve users')
+                    <p class="text-sm text-ink-light">
+                        Hanya superadmin yang bisa menyetujui atau menolak pendaftaran.
+                    </p>
+                @endcannot
+
+                <ul class="divide-y divide-line/30">
+                    @foreach ($pending as $p)
+                        <li class="flex flex-wrap items-center gap-3 py-3">
+                            <span class="grid place-items-center h-9 w-9 rounded-full bg-surface-sunken text-ink font-display font-bold shrink-0">
+                                {{ strtoupper(substr($p->name, 0, 1)) }}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="font-display text-ink">{{ $p->name }}</p>
+                                <p class="text-xs text-ink-light">
+                                    {{ $p->username }} · {{ $p->email }} · daftar {{ $p->created_at?->diffForHumans() }}
+                                </p>
+                            </div>
+                            @can('approve users')
+                                <div class="ml-auto flex items-center gap-2">
+                                    <form method="POST" action="{{ route('users.approve', $p) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="decision" value="approve">
+                                        <button class="btn-primary btn-sm">Setujui</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('users.approve', $p) }}"
+                                          onsubmit="return confirm('Tolak pendaftaran {{ $p->name }}?');">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="decision" value="reject">
+                                        <button class="btn-outline btn-sm text-danger">Tolak</button>
+                                    </form>
+                                </div>
+                            @endcan
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
         <div class="panel overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -50,7 +98,12 @@
                                 </div>
                             </td>
                             <td class="px-4 py-3 hidden sm:table-cell text-ink-light">{{ $u->email }}</td>
-                            <td class="px-4 py-3"><span class="{{ $rBadge }}">{{ $rLabel }}</span></td>
+                            <td class="px-4 py-3">
+                                <span class="{{ $rBadge }}">{{ $rLabel }}</span>
+                                @if ($u->status !== 'active')
+                                    <span class="badge-danger">{{ $u->statusLabel() }}</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-end gap-2">
                                     @if ($canModify)

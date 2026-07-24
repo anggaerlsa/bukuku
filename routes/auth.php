@@ -7,11 +7,18 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\PendingController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    // Invite-only: accounts are created by admins in /kelola/users.
+    // Open registration — the account lands as `pending` and waits for a
+    // superadmin. Admins can still create ready-to-use accounts in /kelola/users.
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store']);
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -32,6 +39,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    // The one page an unapproved account may see. Outside 'approved' on purpose.
+    Route::get('menunggu-persetujuan', PendingController::class)->name('pending');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

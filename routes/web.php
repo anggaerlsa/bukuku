@@ -29,7 +29,10 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 | The Scriptorium — authenticated builder's workspace
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
+// Everything below needs an account that a superadmin has approved. An account
+// still waiting is bounced to the pending page by the `approved` middleware,
+// so a URL typed by hand gets it no further than the links would.
+Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -132,6 +135,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('users', UserController::class)
             ->except(['show'])
             ->middleware('permission:manage users');
+
+        // Approving a registration is the superadmin's call alone.
+        Route::patch('users/{user}/persetujuan', [UserController::class, 'approve'])
+            ->name('users.approve')
+            ->middleware('permission:approve users');
     });
 });
 
