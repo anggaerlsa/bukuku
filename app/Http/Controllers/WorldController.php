@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Character;
 use App\Models\Image;
 use App\Models\Novel;
+use App\Models\Organization;
 use App\Models\World;
 use App\Support\Hierarchy;
 use Illuminate\Http\Request;
@@ -74,12 +75,13 @@ class WorldController extends Controller
     {
         $this->authorize('view', $world);
 
-        $world->load('user', 'novel.genres')->loadCount('characters');
+        $world->load('user', 'novel.genres')->loadCount(['characters', 'organizations']);
         $characters = $world->characters()->latest()->take(6)->get();
+        $organizations = $world->organizations()->withCount('memberships')->with('parent')->orderBy('name')->take(6)->get();
         $benuas = $world->benuas()->with('negaras.provinsis.kotas.desas')->orderBy('name')->get();
         $locationsCount = $world->locationsCount();
 
-        return view('manage.worlds.show', compact('world', 'characters', 'benuas', 'locationsCount'));
+        return view('manage.worlds.show', compact('world', 'characters', 'organizations', 'benuas', 'locationsCount'));
     }
 
     public function edit(World $world)
@@ -122,7 +124,8 @@ class WorldController extends Controller
         // character portraits and every location tier's map. The cascade takes
         // those rows silently too, so collect their files up front: this
         // world only, uploads only (linked URLs are not ours to delete).
-        $paths = Character::where('world_id', $world->id)->pluck('portrait_image');
+        $paths = Character::where('world_id', $world->id)->pluck('portrait_image')
+            ->concat(Organization::where('world_id', $world->id)->pluck('emblem_image'));
 
         foreach (Hierarchy::MODELS as $model) {
             $paths = $paths->concat($model::where('world_id', $world->id)->pluck('map_image'));

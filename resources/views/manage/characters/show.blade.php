@@ -89,6 +89,91 @@
                                  title="Galeri Karakter"
                                  hint="Potret utama diatur di form Sunting; gambar di sini adalah tambahannya." />
 
+                {{-- Organisasi tempat karakter ini bernaung, beserta jabatannya --}}
+                <div class="panel p-6 space-y-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h2 class="font-display text-xl text-ink">🛡️ Organisasi</h2>
+                        <span class="badge-accent">{{ $memberships->count() }}</span>
+                    </div>
+
+                    @if ($memberships->isEmpty())
+                        <p class="text-sm text-ink-light">Belum tergabung di organisasi mana pun.</p>
+                    @else
+                        <ul class="divide-y divide-line/40">
+                            @foreach ($memberships as $member)
+                                <li class="flex flex-wrap items-center gap-3 py-2">
+                                    <a href="{{ route('organizations.show', [$world, $member->organization]) }}"
+                                       class="font-display text-ink hover:text-accent-dark">{{ $member->organization->name }}</a>
+                                    @if ($member->role)
+                                        <span class="badge-muted">{{ $member->role }}</span>
+                                    @endif
+                                    @if ($member->status !== 'aktif')
+                                        <span class="text-xs text-ink-light italic">{{ $member->statusLabel() }}</span>
+                                    @endif
+                                    @if ($member->note)
+                                        <span class="text-sm text-ink-light">— {{ $member->note }}</span>
+                                    @endif
+                                    @can('update', $world)
+                                        <form method="POST" class="ml-auto"
+                                              action="{{ route('organization-members.destroy', [$world, $member->id]) }}"
+                                              onsubmit="return confirm('Lepas dari “{{ $member->organization->name }}”?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn-ghost btn-sm text-danger">Lepas</button>
+                                        </form>
+                                    @endcan
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    @can('update', $world)
+                        @if ($joinableOrganizations->isEmpty())
+                            <p class="text-sm text-ink-light border-t border-line/40 pt-4">
+                                @if ($world->organizations()->count() === 0)
+                                    Dunia ini belum punya organisasi —
+                                    <a href="{{ route('organizations.create', $world) }}" class="underline">buat dulu</a>.
+                                @else
+                                    Sudah tergabung di semua organisasi dunia ini.
+                                @endif
+                            </p>
+                        @else
+                            <form method="POST" action="{{ route('organization-members.store', $world) }}"
+                                  class="border-t border-line/40 pt-4 space-y-3">
+                                @csrf
+                                <input type="hidden" name="character_id" value="{{ $character->id }}">
+                                <p class="label">Gabung organisasi</p>
+                                <div class="grid sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <x-input-label for="organization_id" value="Organisasi" />
+                                        <select id="organization_id" name="organization_id" class="select mt-1">
+                                            <option value="">— pilih organisasi —</option>
+                                            @foreach ($joinableOrganizations as $org)
+                                                <option value="{{ $org->id }}" @selected(old('organization_id') == $org->id)>{{ $org->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <x-input-error :messages="$errors->get('organization_id')" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="role" value="Jabatan / Pangkat" />
+                                        <x-text-input id="role" name="role" type="text" class="mt-1" :value="old('role')" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="member_status" value="Status" />
+                                        <select id="member_status" name="status" class="select mt-1">
+                                            @foreach (\App\Models\OrganizationMember::statuses() as $key => $label)
+                                                <option value="{{ $key }}" @selected(old('status', 'aktif') === $key)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <x-input-error :messages="$errors->get('character_id')" />
+                                <x-primary-button class="btn-sm">Gabungkan</x-primary-button>
+                            </form>
+                        @endif
+                    @endcan
+                </div>
+
                 {{-- Ties to other characters. Stored once; shown from both sides. --}}
                 <div class="panel p-6 space-y-4">
                     <div class="flex flex-wrap items-center gap-3">

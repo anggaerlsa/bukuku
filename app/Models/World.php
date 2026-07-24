@@ -58,6 +58,11 @@ class World extends Model
         return $this->hasMany(Character::class);
     }
 
+    public function organizations(): HasMany
+    {
+        return $this->hasMany(Organization::class);
+    }
+
     /** Author-defined attributes belonging to this world only. */
     public function customFields(): HasMany
     {

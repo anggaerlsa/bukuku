@@ -67,13 +67,31 @@ class CharacterController extends Controller
 
         $character->load(['origin', 'residence', 'relationsOut.relatedCharacter', 'relationsIn.character']);
 
+        $memberships = $character->memberships()
+            ->with('organization')
+            ->get()
+            ->filter(fn ($m) => $m->organization !== null)
+            ->sortBy([
+                fn ($a, $b) => $a->status <=> $b->status,
+                fn ($a, $b) => $a->organization->name <=> $b->organization->name,
+            ])
+            ->values();
+
+        // Organisasi yang belum diikuti karakter ini.
+        $joinableOrganizations = $world->organizations()
+            ->whereNotIn('id', $character->memberships()->select('organization_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         $relationEntries = $character->relationEntries();
         $otherCharacters = $world->characters()
             ->whereKeyNot($character->id)
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('manage.characters.show', compact('world', 'character', 'relationEntries', 'otherCharacters'));
+        return view('manage.characters.show', compact(
+            'world', 'character', 'relationEntries', 'otherCharacters', 'memberships', 'joinableOrganizations'
+        ));
     }
 
     public function edit(World $world, Character $character)

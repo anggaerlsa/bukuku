@@ -9,6 +9,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NovelController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorldController;
@@ -76,6 +78,21 @@ Route::middleware('auth')->group(function () {
             Route::get('/{tier}/{id}/edit', [LocationController::class, 'edit'])->name('locations.edit')->whereIn('tier', $tiers)->whereNumber('id');
             Route::put('/{tier}/{id}', [LocationController::class, 'update'])->name('locations.update')->whereIn('tier', $tiers)->whereNumber('id');
             Route::delete('/{tier}/{id}', [LocationController::class, 'destroy'])->name('locations.destroy')->whereIn('tier', $tiers)->whereNumber('id');
+        });
+
+        // Organisations (Organisasi) — factions, houses, armies, orders.
+        Route::resource('dunia.organisasi', OrganizationController::class)
+            ->parameters(['dunia' => 'world', 'organisasi' => 'organization'])
+            ->names('organizations')
+            ->scoped();
+
+        // Membership ties a character to an organisation, with their rank.
+        Route::scopeBindings()->group(function () {
+            Route::post('dunia/{world}/keanggotaan', [OrganizationMemberController::class, 'store'])
+                ->name('organization-members.store');
+            Route::delete('dunia/{world}/keanggotaan/{member}', [OrganizationMemberController::class, 'destroy'])
+                ->name('organization-members.destroy')
+                ->whereNumber('member');
         });
 
         // Custom fields (Atribut) — attributes the author invents per world.

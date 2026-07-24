@@ -103,6 +103,12 @@ class Character extends Model
         return $this->morphTo();
     }
 
+    /** Which organisations this character belongs to, and with what rank. */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(OrganizationMember::class);
+    }
+
     /** Ties created from this character's page. */
     public function relationsOut(): HasMany
     {

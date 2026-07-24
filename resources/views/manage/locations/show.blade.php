@@ -72,6 +72,22 @@
                          title="Galeri Lokasi"
                          hint="Peta utama diatur di form Sunting; gambar di sini adalah tambahannya." />
 
+        {{-- Organisasi yang bermarkas di sini --}}
+        @if ($based->isNotEmpty())
+            <section>
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <h2 class="font-display text-xl text-ink">🛡️ Bermarkas di Sini</h2>
+                    <span class="badge-accent">{{ $based->count() }}</span>
+                    <span class="h-px flex-1 bg-shell/20"></span>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($based as $organization)
+                        <x-organization-card :world="$world" :organization="$organization" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         {{-- Characters tied to this place --}}
         @if ($natives->isNotEmpty() || $residents->isNotEmpty())
             <section class="space-y-5">

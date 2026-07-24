@@ -101,7 +101,10 @@ class LocationController extends Controller
         $natives = $node->nativeCharacters()->orderBy('name')->get();
         $residents = $node->residentCharacters()->orderBy('name')->get();
 
-        return view('manage.locations.show', compact('world', 'node', 'tier', 'ancestors', 'natives', 'residents'));
+        // Organisasi yang bermarkas di sini.
+        $based = $node->basedOrganizations()->withCount('memberships')->with('parent')->orderBy('name')->get();
+
+        return view('manage.locations.show', compact('world', 'node', 'tier', 'ancestors', 'natives', 'residents', 'based'));
     }
 
     public function edit(World $world, string $tier, string $id)

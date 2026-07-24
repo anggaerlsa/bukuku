@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Character;
+use App\Models\Organization;
 use App\Models\World;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,7 +17,10 @@ class ImageOwners
     /** @return array<string, class-string<Model>> */
     public static function types(): array
     {
-        return ['character' => Character::class] + Hierarchy::MODELS;
+        return [
+            'character' => Character::class,
+            'organization' => Organization::class,
+        ] + Hierarchy::MODELS;
     }
 
     public static function isType(?string $type): bool
@@ -37,8 +41,10 @@ class ImageOwners
     /** Where the owner's own page lives, so uploads can redirect back to it. */
     public static function showRoute(World $world, Model $owner): string
     {
-        return $owner instanceof Character
-            ? route('characters.show', [$world, $owner])
-            : route('locations.show', [$world, $owner->tierKey(), $owner->id]);
+        return match (true) {
+            $owner instanceof Character => route('characters.show', [$world, $owner]),
+            $owner instanceof Organization => route('organizations.show', [$world, $owner]),
+            default => route('locations.show', [$world, $owner->tierKey(), $owner->id]),
+        };
     }
 }

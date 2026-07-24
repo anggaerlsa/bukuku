@@ -47,6 +47,9 @@ abstract class LocationNode extends Model
 
             Character::where('residence_type', $morph)->where('residence_id', $node->id)
                 ->update(['residence_type' => null, 'residence_id' => null]);
+
+            Organization::where('headquarters_type', $morph)->where('headquarters_id', $node->id)
+                ->update(['headquarters_type' => null, 'headquarters_id' => null]);
         });
     }
 
@@ -65,6 +68,12 @@ abstract class LocationNode extends Model
     public function residentCharacters(): MorphMany
     {
         return $this->morphMany(Character::class, 'residence');
+    }
+
+    /** Organisations based here. */
+    public function basedOrganizations(): MorphMany
+    {
+        return $this->morphMany(Organization::class, 'headquarters');
     }
 
     public function tierKey(): string

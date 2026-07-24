@@ -80,6 +80,32 @@
             @endif
         </section>
 
+        {{-- Organisasi --}}
+        <section>
+            <div class="flex items-center gap-3 mb-5">
+                <h2 class="font-display text-2xl text-ink">🛡️ Organisasi</h2>
+                <span class="badge-accent">{{ $world->organizations_count }}</span>
+                <span class="h-px flex-1 bg-shell/20"></span>
+                <a href="{{ route('organizations.index', $world) }}" class="text-sm text-ink hover:text-accent-dark shrink-0">Lihat semua →</a>
+                @can('update', $world)
+                    <a href="{{ route('organizations.create', $world) }}" class="btn-primary btn-sm shrink-0">✚ Organisasi</a>
+                @endcan
+            </div>
+
+            @if ($organizations->isEmpty())
+                <div class="panel p-8 text-center text-ink-light">
+                    Belum ada organisasi — wangsa, pasukan, sekte, atau guild tempat para karakter bernaung.
+                    @can('update', $world)<a href="{{ route('organizations.create', $world) }}" class="text-ink underline hover:text-accent-dark">Tambahkan yang pertama</a>.@endcan
+                </div>
+            @else
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($organizations as $organization)
+                        <x-organization-card :world="$world" :organization="$organization" />
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
         {{-- Locations (hierarchy tree) --}}
         <section>
             <div class="flex items-center gap-3 mb-5">
