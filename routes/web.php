@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\ChapterController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CharacterController;
 use App\Http\Controllers\CharacterRelationController;
 use App\Http\Controllers\CustomFieldController;
@@ -67,6 +68,15 @@ Route::middleware(['auth', 'approved'])->group(function () {
             ->parameters(['buku' => 'book', 'bab' => 'chapter'])
             ->names('chapters')
             ->scoped();
+
+        // Komentar buku + balasan. Menulis dibatasi laju agar tak jadi corong
+        // spam di novel yang dibagikan; menghapus/menyunting menargetkan
+        // komentar langsung (ia sudah tahu bukunya).
+        Route::post('buku/{book}/komentar', [CommentController::class, 'store'])
+            ->name('comments.store')
+            ->middleware('throttle:30,1');
+        Route::patch('komentar/{comment}', [CommentController::class, 'update'])->name('comments.update');
+        Route::delete('komentar/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
         // Worlds (Dunia) — each a setting belonging to one novel.
         Route::resource('dunia', WorldController::class)

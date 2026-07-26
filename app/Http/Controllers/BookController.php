@@ -83,7 +83,10 @@ class BookController extends Controller
         $chapters = $book->chapters()
             ->get(['id', 'book_id', 'title', 'position', 'word_count', 'published_at']);
 
-        return view('manage.books.show', compact('book', 'chapters'));
+        // Comments, top-level with their replies and authors eager-loaded.
+        $comments = $book->topLevelComments()->get();
+
+        return view('manage.books.show', compact('book', 'chapters', 'comments'));
     }
 
     public function edit(Book $book)

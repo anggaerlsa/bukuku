@@ -56,6 +56,21 @@ class Book extends Model
         return $this->hasMany(Chapter::class)->orderBy('position');
     }
 
+    /** Every comment on the book, replies included. */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /** Top-level comments, oldest first, each with its replies loaded. */
+    public function topLevelComments(): HasMany
+    {
+        return $this->hasMany(Comment::class)
+            ->whereNull('parent_id')
+            ->with(['author', 'replies.author'])
+            ->oldest();
+    }
+
     public function statusLabel(): string
     {
         return static::statuses()[$this->status] ?? ucfirst((string) $this->status);
