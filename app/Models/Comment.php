@@ -2,19 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Novel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * A comment on a book. Top-level when `parent_id` is null; otherwise a reply
- * attached to the top-level comment it names. Replies never nest further —
- * see the migration.
+ * A comment on a Book or a Chapter (polymorphic `commentable`). Top-level when
+ * `parent_id` is null; otherwise a reply attached to the top-level comment it
+ * names. Replies never nest further — see the migration.
  */
 class Comment extends Model
 {
     protected $fillable = [
-        'book_id',
+        'commentable_type',
+        'commentable_id',
         'user_id',
         'parent_id',
         'body',
@@ -26,9 +29,21 @@ class Comment extends Model
         return ['edited_at' => 'datetime'];
     }
 
-    public function book(): BelongsTo
+    /** What the comment is attached to — a Book or a Chapter. */
+    public function commentable(): MorphTo
     {
-        return $this->belongsTo(Book::class);
+        return $this->morphTo();
+    }
+
+    /**
+     * The novel this comment ultimately belongs to, whichever surface it is
+     * on — the anchor every permission check resolves against.
+     */
+    public function novel(): ?Novel
+    {
+        $on = $this->commentable;
+
+        return $on instanceof Chapter ? $on->book?->novel : $on?->novel;
     }
 
     public function author(): BelongsTo

@@ -69,5 +69,14 @@
                 <span class="flex-1"></span>
             @endif
         </nav>
+
+        {{-- Komentar tingkat bab (episode), dengan satu tingkat balasan --}}
+        @include('manage.comments._section', [
+            'commentable' => $chapter,
+            'storeUrl' => route('comments.storeChapter', $chapter),
+            'comments' => $comments,
+            'ownerId' => $book->novel->user_id,
+            'placeholder' => 'Tulis komentar tentang bab ini…',
+        ])
     </div>
 </x-app-layout>

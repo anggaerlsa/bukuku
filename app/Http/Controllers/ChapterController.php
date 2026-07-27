@@ -54,6 +54,7 @@ class ChapterController extends Controller
             'chapter' => $chapter,
             'previous' => $chapter->previous(),
             'next' => $chapter->next(),
+            'comments' => $chapter->topLevelComments()->get(),
         ]);
     }
 

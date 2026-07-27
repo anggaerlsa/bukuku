@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 /**
@@ -43,6 +44,15 @@ class Chapter extends Model
                 $chapter->word_count = static::countWords($chapter->body);
             }
         });
+
+        // Polymorphic comments have no FK cascade — clear a chapter's comments
+        // when it is deleted directly. (A book deleted via its own hook does
+        // not remove chapters; ChapterController deletes each chapter through
+        // Eloquent, so this fires. The novel-cascade path is handled in
+        // NovelController::destroy.)
+        static::deleting(function (Chapter $chapter) {
+            $chapter->comments()->delete();
+        });
     }
 
     public static function countWords(?string $body): int
@@ -55,6 +65,21 @@ class Chapter extends Model
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class);
+    }
+
+    /** Every comment on this chapter, replies included. */
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    /** Top-level comments, oldest first, each with its replies loaded. */
+    public function topLevelComments(): MorphMany
+    {
+        return $this->comments()
+            ->whereNull('parent_id')
+            ->with(['author', 'replies.author'])
+            ->oldest();
     }
 
     /** Roughly 200 words a minute, rounded up, never below one. */

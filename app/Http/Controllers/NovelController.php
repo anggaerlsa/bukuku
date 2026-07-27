@@ -157,6 +157,20 @@ class NovelController extends Controller
 
         Uploads::delete($novel->cover_image);
 
+        // Comments are polymorphic, so the FK cascade that removes this novel's
+        // books and chapters cannot reach their comments. Clear them first,
+        // scoped to this novel — the same reason WorldController clears uploads
+        // before its cascade.
+        $bookIds = $novel->books()->pluck('id');
+        if ($bookIds->isNotEmpty()) {
+            $chapterIds = \App\Models\Chapter::whereIn('book_id', $bookIds)->pluck('id');
+            \App\Models\Comment::where(function ($q) use ($bookIds) {
+                $q->where('commentable_type', \App\Models\Book::class)->whereIn('commentable_id', $bookIds);
+            })->orWhere(function ($q) use ($chapterIds) {
+                $q->where('commentable_type', \App\Models\Chapter::class)->whereIn('commentable_id', $chapterIds);
+            })->delete();
+        }
+
         $title = $novel->title;
         $novel->delete();
 

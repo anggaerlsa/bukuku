@@ -6,6 +6,7 @@ use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
 
 /**
@@ -28,6 +29,17 @@ class Book extends Model
     protected function casts(): array
     {
         return ['position' => 'integer'];
+    }
+
+    protected static function booted(): void
+    {
+        // Comments are polymorphic, so there is no FK to cascade them away.
+        // Clear a volume's own comments when it is deleted directly. The
+        // novel-deletion cascade path is handled in NovelController::destroy,
+        // since a DB cascade never fires this hook.
+        static::deleting(function (Book $book) {
+            $book->comments()->delete();
+        });
     }
 
     public static function statuses(): array
@@ -56,16 +68,16 @@ class Book extends Model
         return $this->hasMany(Chapter::class)->orderBy('position');
     }
 
-    /** Every comment on the book, replies included. */
-    public function comments(): HasMany
+    /** Every comment on the book itself, replies included. */
+    public function comments(): MorphMany
     {
-        return $this->hasMany(Comment::class);
+        return $this->morphMany(Comment::class, 'commentable');
     }
 
     /** Top-level comments, oldest first, each with its replies loaded. */
-    public function topLevelComments(): HasMany
+    public function topLevelComments(): MorphMany
     {
-        return $this->hasMany(Comment::class)
+        return $this->comments()
             ->whereNull('parent_id')
             ->with(['author', 'replies.author'])
             ->oldest();

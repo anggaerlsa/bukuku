@@ -75,6 +75,9 @@ Route::middleware(['auth', 'approved'])->group(function () {
         Route::post('buku/{book}/komentar', [CommentController::class, 'store'])
             ->name('comments.store')
             ->middleware('throttle:30,1');
+        Route::post('bab/{chapter}/komentar', [CommentController::class, 'storeChapter'])
+            ->name('comments.storeChapter')
+            ->middleware('throttle:30,1');
         Route::patch('komentar/{comment}', [CommentController::class, 'update'])->name('comments.update');
         Route::delete('komentar/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Book;
+use App\Models\Chapter;
 use App\Models\Comment;
 use App\Models\Novel;
 use App\Models\User;
@@ -11,13 +12,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Comments on a book, and one level of replies.
+ * Comments on a Book or a Chapter, and one level of replies.
  *
- * The rules worth pinning: only someone who can READ a book may comment (so a
- * shared novel opens to its members and a private one does not), a reply may
- * only attach to a top-level comment of the same book, editing is the
- * author's alone, and the novel's owner may delete anything on their book
- * while an outsider may delete nothing.
+ * The rules worth pinning: only someone who can READ the surface may comment
+ * (so a shared novel opens to its members and a private one does not), a reply
+ * may only attach to a top-level comment of the SAME surface, editing is the
+ * author's alone, and the novel's owner may delete anything while an outsider
+ * may delete nothing.
  */
 class CommentTest extends TestCase
 {
@@ -63,6 +64,15 @@ class CommentTest extends TestCase
         ]);
     }
 
+    private function chapterFor(Book $book): Chapter
+    {
+        return $book->chapters()->create([
+            'title' => 'Bab Uji',
+            'body' => 'Isi bab.',
+            'position' => 1,
+        ]);
+    }
+
     public function test_the_owner_can_comment_on_their_own_book(): void
     {
         $owner = $this->author();
@@ -73,7 +83,8 @@ class CommentTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('comments', [
-            'book_id' => $book->id,
+            'commentable_type' => Book::class,
+            'commentable_id' => $book->id,
             'user_id' => $owner->id,
             'parent_id' => null,
             'body' => 'Catatan untuk diriku.',
@@ -245,5 +256,112 @@ class CommentTest extends TestCase
         $book->delete();
 
         $this->assertModelMissing($comment);
+    }
+
+    // --- Chapter-level comments: the per-episode reading page -------------
+
+    public function test_a_member_can_comment_on_a_chapter_of_a_shared_novel(): void
+    {
+        $owner = $this->author();
+        $chapter = $this->chapterFor($this->bookFor($this->novelFor($owner, shared: true)));
+        $member = $this->author();
+
+        $this->actingAs($member)
+            ->post(route('comments.storeChapter', $chapter), ['body' => 'Adegan ini bikin merinding.'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('comments', [
+            'commentable_type' => Chapter::class,
+            'commentable_id' => $chapter->id,
+            'user_id' => $member->id,
+            'body' => 'Adegan ini bikin merinding.',
+        ]);
+    }
+
+    public function test_a_chapter_of_a_private_novel_blocks_outsiders(): void
+    {
+        $chapter = $this->chapterFor($this->bookFor($this->novelFor($this->author(), shared: false)));
+
+        $this->actingAs($this->author())
+            ->post(route('comments.storeChapter', $chapter), ['body' => 'Menyusup.'])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('comments', 0);
+    }
+
+    public function test_book_and_chapter_comments_stay_on_their_own_surface(): void
+    {
+        $owner = $this->author();
+        $book = $this->bookFor($this->novelFor($owner, shared: true));
+        $chapter = $this->chapterFor($book);
+
+        $book->comments()->create(['user_id' => $owner->id, 'body' => 'Di buku']);
+        $chapter->comments()->create(['user_id' => $owner->id, 'body' => 'Di bab']);
+
+        $this->assertSame(1, $book->comments()->count());
+        $this->assertSame('Di buku', $book->comments()->sole()->body);
+        $this->assertSame(1, $chapter->comments()->count());
+        $this->assertSame('Di bab', $chapter->comments()->sole()->body);
+    }
+
+    public function test_a_chapter_reply_cannot_borrow_a_books_comment(): void
+    {
+        $owner = $this->author();
+        $book = $this->bookFor($this->novelFor($owner, shared: true));
+        $chapter = $this->chapterFor($book);
+        $onBook = $book->comments()->create(['user_id' => $owner->id, 'body' => 'Komentar buku']);
+
+        // A reply posted to the chapter may not name a comment that lives on
+        // the book — different surface.
+        $this->actingAs($this->author())
+            ->post(route('comments.storeChapter', $chapter), ['body' => 'Nyasar', 'parent_id' => $onBook->id])
+            ->assertSessionHasErrors('parent_id');
+    }
+
+    public function test_deleting_a_chapter_takes_its_comments(): void
+    {
+        $owner = $this->author();
+        $chapter = $this->chapterFor($this->bookFor($this->novelFor($owner)));
+        $comment = $chapter->comments()->create(['user_id' => $owner->id, 'body' => 'Menempel di bab']);
+
+        $chapter->delete();
+
+        $this->assertModelMissing($comment);
+    }
+
+    public function test_the_novel_owner_moderates_chapter_comments_too(): void
+    {
+        $owner = $this->author();
+        $chapter = $this->chapterFor($this->bookFor($this->novelFor($owner, shared: true)));
+        $member = $this->author();
+        $comment = $chapter->comments()->create(['user_id' => $member->id, 'body' => 'Spam di bab']);
+
+        $this->actingAs($owner)
+            ->delete(route('comments.destroy', $comment))
+            ->assertRedirect();
+
+        $this->assertModelMissing($comment);
+    }
+
+    public function test_deleting_a_novel_clears_book_and_chapter_comments(): void
+    {
+        // Polymorphic comments have no FK cascade; deleting the whole novel
+        // must not leave orphan comment rows behind (NovelController cleanup).
+        $owner = $this->author();
+        $novel = $this->novelFor($owner);
+        $book = $this->bookFor($novel);
+        $chapter = $this->chapterFor($book);
+
+        $bookComment = $book->comments()->create(['user_id' => $owner->id, 'body' => 'Di buku']);
+        $chapterComment = $chapter->comments()->create(['user_id' => $owner->id, 'body' => 'Di bab']);
+
+        $this->actingAs($owner)->delete(route('novels.destroy', $novel))->assertRedirect();
+
+        $this->assertModelMissing($novel);
+        $this->assertModelMissing($book);
+        $this->assertModelMissing($chapter);
+        $this->assertModelMissing($bookComment);
+        $this->assertModelMissing($chapterComment);
+        $this->assertDatabaseCount('comments', 0);
     }
 }
