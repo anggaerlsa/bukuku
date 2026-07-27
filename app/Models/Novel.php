@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CascadesSoftDeletes;
 use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 /**
@@ -15,6 +17,24 @@ use Illuminate\Support\Str;
  */
 class Novel extends Model
 {
+    use CascadesSoftDeletes;
+    use SoftDeletes;
+
+    /**
+     * A novel is the top of the tree: its worlds (and everything under them)
+     * and its manuscript go into the bin together, and come back together.
+     *
+     * @var list<string>
+     */
+    protected array $cascadeSoftDeletes = ['worlds', 'books'];
+
+    protected static function booted(): void
+    {
+        // Only a permanent delete takes the cover file — a novel in the bin
+        // must be restorable complete with its picture.
+        static::forceDeleted(fn (Novel $novel) => Uploads::delete($novel->cover_image));
+    }
+
     protected $fillable = [
         'user_id',
         'title',

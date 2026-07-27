@@ -114,32 +114,15 @@ class WorldController extends Controller
     {
         $this->authorize('delete', $world);
 
-        Uploads::delete($world->cover_image);
-
-        // Gallery rows would vanish through the FK cascade without ever firing
-        // their deleting hook, stranding the uploaded files. Delete them first,
-        // scoped to this world only.
-        Image::where('world_id', $world->id)->get()->each->delete();
-
-        // Same story for the cover pictures held on the rows themselves —
-        // character portraits and every location tier's map. The cascade takes
-        // those rows silently too, so collect their files up front, scoped to
-        // this world. Uploads::delete() drops the linked URLs among them,
-        // which are not ours to remove.
-        $paths = Character::where('world_id', $world->id)->pluck('portrait_image')
-            ->concat(Organization::where('world_id', $world->id)->pluck('emblem_image'))
-            ->concat(LoreEntry::where('world_id', $world->id)->pluck('cover_image'));
-
-        foreach (Hierarchy::MODELS as $model) {
-            $paths = $paths->concat($model::where('world_id', $world->id)->pluck('map_image'));
-        }
-
-        Uploads::delete($paths->all());
-
+        // Soft delete: the world and its whole lore go to the bin together
+        // (see World::$cascadeSoftDeletes) and can be brought back intact.
+        // Nothing is erased here — uploads and gallery rows are only cleaned up
+        // on a permanent delete, by the models' forceDeleted hooks.
         $name = $world->name;
         $world->delete();
 
-        return redirect()->route('worlds.index')->with('status', "Dunia \"{$name}\" telah dilenyapkan beserta seluruh lorenya.");
+        return redirect()->route('worlds.index')
+            ->with('status', "Dunia \"{$name}\" beserta seluruh lorenya dipindahkan ke Sampah. Masih bisa dipulihkan.");
     }
 
     /**
@@ -180,7 +163,9 @@ class WorldController extends Controller
         $i = 1;
 
         while (
-            World::where('slug', $slug)
+            // withTrashed: a world in the bin still holds its slug (see
+            // NovelController::uniqueSlug).
+            World::withTrashed()->where('slug', $slug)
                 ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
                 ->exists()
         ) {

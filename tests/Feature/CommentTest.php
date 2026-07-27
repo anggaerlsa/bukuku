@@ -247,14 +247,18 @@ class CommentTest extends TestCase
         $this->assertDatabaseCount('comments', 0);
     }
 
-    public function test_deleting_a_book_takes_its_comments(): void
+    public function test_a_binned_book_keeps_its_comments_until_purged(): void
     {
         $owner = $this->author();
         $book = $this->bookFor($this->novelFor($owner));
         $comment = $book->comments()->create(['user_id' => $owner->id, 'body' => 'Menempel di buku']);
 
+        // Recoverable delete: the conversation has to survive, or restoring
+        // the book would bring back a silent page.
         $book->delete();
+        $this->assertModelExists($comment);
 
+        Book::onlyTrashed()->find($book->id)->purge();
         $this->assertModelMissing($comment);
     }
 
@@ -318,14 +322,16 @@ class CommentTest extends TestCase
             ->assertSessionHasErrors('parent_id');
     }
 
-    public function test_deleting_a_chapter_takes_its_comments(): void
+    public function test_a_binned_chapter_keeps_its_comments_until_purged(): void
     {
         $owner = $this->author();
         $chapter = $this->chapterFor($this->bookFor($this->novelFor($owner)));
         $comment = $chapter->comments()->create(['user_id' => $owner->id, 'body' => 'Menempel di bab']);
 
         $chapter->delete();
+        $this->assertModelExists($comment);
 
+        Chapter::onlyTrashed()->find($chapter->id)->forceDelete();
         $this->assertModelMissing($comment);
     }
 
@@ -343,10 +349,11 @@ class CommentTest extends TestCase
         $this->assertModelMissing($comment);
     }
 
-    public function test_deleting_a_novel_clears_book_and_chapter_comments(): void
+    public function test_purging_a_novel_clears_book_and_chapter_comments(): void
     {
-        // Polymorphic comments have no FK cascade; deleting the whole novel
-        // must not leave orphan comment rows behind (NovelController cleanup).
+        // Polymorphic comments have no FK cascade, so purge() must walk the
+        // tree in PHP and let each forceDeleted hook clear its own comments —
+        // otherwise orphan rows are left behind.
         $owner = $this->author();
         $novel = $this->novelFor($owner);
         $book = $this->bookFor($novel);
@@ -355,13 +362,19 @@ class CommentTest extends TestCase
         $bookComment = $book->comments()->create(['user_id' => $owner->id, 'body' => 'Di buku']);
         $chapterComment = $chapter->comments()->create(['user_id' => $owner->id, 'body' => 'Di bab']);
 
+        // Binning the novel keeps everything, conversation included.
         $this->actingAs($owner)->delete(route('novels.destroy', $novel))->assertRedirect();
+        $this->assertModelExists($bookComment);
+        $this->assertModelExists($chapterComment);
 
-        $this->assertModelMissing($novel);
-        $this->assertModelMissing($book);
-        $this->assertModelMissing($chapter);
-        $this->assertModelMissing($bookComment);
-        $this->assertModelMissing($chapterComment);
+        // Emptying it from the bin is what finally destroys them.
+        $this->actingAs($owner)
+            ->delete(route('trash.destroy', ['novel', $novel->id]))
+            ->assertRedirect();
+
+        $this->assertSame(0, Novel::withTrashed()->whereKey($novel->id)->count());
+        $this->assertSame(0, Book::withTrashed()->whereKey($book->id)->count());
+        $this->assertSame(0, Chapter::withTrashed()->whereKey($chapter->id)->count());
         $this->assertDatabaseCount('comments', 0);
     }
 }

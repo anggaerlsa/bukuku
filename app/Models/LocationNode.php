@@ -9,6 +9,7 @@ use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
 /**
@@ -19,6 +20,8 @@ abstract class LocationNode extends Model
 {
     use HasCustomFields;
     use HasImages;
+    // Every tier is soft-deletable; declared once here rather than five times.
+    use SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -36,9 +39,14 @@ abstract class LocationNode extends Model
 
     protected static function booted(): void
     {
-        // A location that goes away must not leave characters pointing at a
-        // row that no longer exists. Scoped to this exact node — never global.
-        static::deleting(function (LocationNode $node) {
+        // A location that goes away for good must not leave characters pointing
+        // at a row that no longer exists. Scoped to this exact node — never
+        // global.
+        //
+        // PERMANENT deletes only. On a soft delete the row is still there, and
+        // clearing the links here would be silent data loss: restoring the
+        // location could never put "asal: Kota Abtein" back on the character.
+        static::forceDeleted(function (LocationNode $node) {
             $morph = $node->getMorphClass();
 
             Character::where('origin_type', $morph)->where('origin_id', $node->id)
@@ -49,6 +57,8 @@ abstract class LocationNode extends Model
 
             Organization::where('headquarters_type', $morph)->where('headquarters_id', $node->id)
                 ->update(['headquarters_type' => null, 'headquarters_id' => null]);
+
+            Uploads::delete($node->map_image);
         });
     }
 

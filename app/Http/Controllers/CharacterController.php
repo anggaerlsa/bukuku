@@ -124,8 +124,6 @@ class CharacterController extends Controller
     {
         $this->authorize('update', $world);
 
-        Uploads::delete($character->portrait_image);
-
         $name = $character->name;
         $character->delete();
 

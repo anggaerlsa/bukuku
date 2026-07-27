@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Support\Str;
  */
 class Chapter extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'book_id',
         'title',
@@ -45,12 +48,10 @@ class Chapter extends Model
             }
         });
 
-        // Polymorphic comments have no FK cascade — clear a chapter's comments
-        // when it is deleted directly. (A book deleted via its own hook does
-        // not remove chapters; ChapterController deletes each chapter through
-        // Eloquent, so this fires. The novel-cascade path is handled in
-        // NovelController::destroy.)
-        static::deleting(function (Chapter $chapter) {
+        // Polymorphic comments have no FK cascade. Only clear them on a
+        // PERMANENT delete — a chapter in the bin can still be restored, and
+        // its comments should come back with it.
+        static::forceDeleted(function (Chapter $chapter) {
             $chapter->comments()->delete();
         });
     }

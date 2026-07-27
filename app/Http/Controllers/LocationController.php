@@ -154,8 +154,6 @@ class LocationController extends Controller
             return back()->with('error', 'Lokasi ini memiliki sub-lokasi. Hapus atau pindahkan sub-lokasinya terlebih dahulu.');
         }
 
-        Uploads::delete($node->map_image);
-
         $name = $node->name;
         $node->delete();
 

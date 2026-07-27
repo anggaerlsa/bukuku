@@ -2,17 +2,40 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CascadesSoftDeletes;
 use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class World extends Model
 {
+    use CascadesSoftDeletes;
     /** @use HasFactory<\Database\Factories\WorldFactory> */
     use HasFactory;
+    use SoftDeletes;
+
+    /**
+     * Binning a world takes its whole lore with it — that is the one delete in
+     * this app that reaches the furthest, and the reason the bin exists.
+     * Locations are listed flat: all five tiers are scoped to the world, so
+     * there is no need to walk the hierarchy.
+     *
+     * @var list<string>
+     */
+    protected array $cascadeSoftDeletes = [
+        'characters',
+        'organizations',
+        'loreEntries',
+        'benuas',
+        'negaras',
+        'provinsis',
+        'kotas',
+        'desas',
+    ];
 
     protected $fillable = [
         'user_id',
@@ -24,6 +47,17 @@ class World extends Model
         'cover_image',
         'status',
     ];
+
+    protected static function booted(): void
+    {
+        // On a permanent delete only. purge() walks the children first, so each
+        // has already cleaned up its own files by the time this runs; what is
+        // left is the world's own cover and any gallery rows still scoped to it.
+        static::forceDeleted(function (World $world) {
+            Image::where('world_id', $world->id)->get()->each->delete();
+            Uploads::delete($world->cover_image);
+        });
+    }
 
     /**
      * @return array<string, string>

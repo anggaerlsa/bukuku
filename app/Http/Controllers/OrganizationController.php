@@ -123,8 +123,6 @@ class OrganizationController extends Controller
             return back()->with('error', "Organisasi ini masih menaungi {$count} sub-organisasi. Pindahkan atau hapus dulu.");
         }
 
-        Uploads::delete($organization->emblem_image);
-
         $name = $organization->name;
         $organization->delete();
 

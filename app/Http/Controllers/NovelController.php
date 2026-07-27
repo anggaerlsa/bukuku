@@ -155,26 +155,15 @@ class NovelController extends Controller
             return back()->with('error', "Novel ini masih memiliki {$count} dunia. Pindahkan atau hapus dunianya lebih dahulu.");
         }
 
-        Uploads::delete($novel->cover_image);
-
-        // Comments are polymorphic, so the FK cascade that removes this novel's
-        // books and chapters cannot reach their comments. Clear them first,
-        // scoped to this novel — the same reason WorldController clears uploads
-        // before its cascade.
-        $bookIds = $novel->books()->pluck('id');
-        if ($bookIds->isNotEmpty()) {
-            $chapterIds = \App\Models\Chapter::whereIn('book_id', $bookIds)->pluck('id');
-            \App\Models\Comment::where(function ($q) use ($bookIds) {
-                $q->where('commentable_type', \App\Models\Book::class)->whereIn('commentable_id', $bookIds);
-            })->orWhere(function ($q) use ($chapterIds) {
-                $q->where('commentable_type', \App\Models\Chapter::class)->whereIn('commentable_id', $chapterIds);
-            })->delete();
-        }
-
+        // Soft delete: the novel, its worlds and its manuscript go to the bin
+        // together and come back together. Nothing is erased — files, gallery
+        // rows and comments survive until a permanent delete, which the models'
+        // forceDeleted hooks handle.
         $title = $novel->title;
         $novel->delete();
 
-        return redirect()->route('novels.index')->with('status', "Novel \"{$title}\" dihapus.");
+        return redirect()->route('novels.index')
+            ->with('status', "Novel \"{$title}\" dipindahkan ke Sampah. Masih bisa dipulihkan.");
     }
 
     private function validateNovel(Request $request, ?Novel $novel = null): array
@@ -201,7 +190,11 @@ class NovelController extends Controller
         $i = 1;
 
         while (
-            Novel::where('slug', $slug)
+            // withTrashed: a novel in the bin still occupies its slug in the
+            // unique index. Ignoring it would hand the same slug to a new
+            // record and blow up on insert — and it happens exactly when an
+            // author deletes something and recreates it under the same title.
+            Novel::withTrashed()->where('slug', $slug)
                 ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
                 ->exists()
         ) {

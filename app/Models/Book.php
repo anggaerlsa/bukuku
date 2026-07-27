@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CascadesSoftDeletes;
 use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 /**
@@ -16,6 +18,12 @@ use Illuminate\Support\Str;
  */
 class Book extends Model
 {
+    use CascadesSoftDeletes;
+    use SoftDeletes;
+
+    /** A volume in the bin takes its chapters with it. @var list<string> */
+    protected array $cascadeSoftDeletes = ['chapters'];
+
     protected $fillable = [
         'novel_id',
         'title',
@@ -34,11 +42,11 @@ class Book extends Model
     protected static function booted(): void
     {
         // Comments are polymorphic, so there is no FK to cascade them away.
-        // Clear a volume's own comments when it is deleted directly. The
-        // novel-deletion cascade path is handled in NovelController::destroy,
-        // since a DB cascade never fires this hook.
-        static::deleting(function (Book $book) {
+        // Only clear them on a PERMANENT delete: a volume in the bin can still
+        // be restored, and it must come back with its conversation intact.
+        static::forceDeleted(function (Book $book) {
             $book->comments()->delete();
+            Uploads::delete($book->cover_image);
         });
     }
 

@@ -7,6 +7,7 @@ use App\Models\Concerns\HasImages;
 use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A free-form lore article: a magic system, a pantheon, a glossary, a piece of
@@ -17,6 +18,15 @@ class LoreEntry extends Model
 {
     use HasCustomFields;
     use HasImages;
+    use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::forceDeleted(function (LoreEntry $entry) {
+            $entry->images()->get()->each->delete();
+            Uploads::delete($entry->cover_image);
+        });
+    }
 
     protected $fillable = [
         'world_id',

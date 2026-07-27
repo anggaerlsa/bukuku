@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,17 @@ class Character extends Model
     use HasFactory;
     use HasCustomFields;
     use HasImages;
+    use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        // Files and gallery rows go only on a permanent delete; a character in
+        // the bin must come back with their portrait.
+        static::forceDeleted(function (Character $character) {
+            $character->images()->get()->each->delete();
+            Uploads::delete($character->portrait_image);
+        });
+    }
 
     /** Column holding the record's cover picture (see HasImages). */
     public function coverColumn(): string

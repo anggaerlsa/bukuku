@@ -9,10 +9,15 @@
                 petakan <strong class="text-accent-light">lokasi</strong>, dan rajut lore ceritamu dalam satu
                 pustaka yang rapi — meja kerja worldbuilding milikmu sendiri.
             </p>
-            <div class="mt-8 flex items-center justify-center gap-3">
+            <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <a href="{{ route('login') }}" class="btn-primary !py-3 !px-7 text-sm">Masuk ke Meja Kerja</a>
+                @if (Route::has('register'))
+                    <a href="{{ route('register') }}" class="btn-outline !py-3 !px-7 text-sm">Daftar</a>
+                @endif
             </div>
-            <p class="mt-3 text-xs text-white/40">Akses khusus para perancang dunia — hubungi admin untuk dibuatkan akun.</p>
+            {{-- Pendaftaran sudah dibuka; teks lama masih menyuruh menghubungi
+                 admin, padahal /register hidup. --}}
+            <p class="mt-3 text-xs text-white/40">Akun baru perlu disetujui superadmin sebelum bisa dipakai.</p>
         </div>
     </section>
 

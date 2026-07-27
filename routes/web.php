@@ -16,6 +16,7 @@ use App\Http\Controllers\NovelController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorldController;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,13 @@ Route::middleware(['auth', 'approved'])->group(function () {
         // Share a novel read-only with every signed-in member.
         Route::patch('novel/{novel}/bagikan', [NovelController::class, 'share'])
             ->name('novels.share');
+
+        // Sampah — deleted work, restorable until it is destroyed on purpose.
+        Route::get('sampah', [TrashController::class, 'index'])->name('trash.index');
+        Route::patch('sampah/{type}/{id}', [TrashController::class, 'restore'])
+            ->name('trash.restore')->whereNumber('id');
+        Route::delete('sampah/{type}/{id}', [TrashController::class, 'destroy'])
+            ->name('trash.destroy')->whereNumber('id');
 
         // Buku — the manuscript itself: volumes of a novel, each holding the
         // chapters in reading order. Shaped like Dunia rather than nested

@@ -138,7 +138,9 @@ class BookChapterTest extends TestCase
 
         $this->actingAs($author)->delete(route('books.destroy', $book))->assertRedirect();
 
-        $this->assertModelMissing($book);
+        // Deletes are recoverable now: gone from sight, still in the bin.
+        $this->assertSame(0, Book::whereKey($book->id)->count());
+        $this->assertSame(1, Book::onlyTrashed()->whereKey($book->id)->count());
     }
 
     public function test_a_stranger_can_neither_read_nor_write(): void
@@ -197,10 +199,17 @@ class BookChapterTest extends TestCase
         $book = $this->bookFor($novel);
         $chapter = $book->chapters()->create(['title' => 'Bab', 'position' => 1]);
 
-        // Cascade at the database level, the same as worlds and lore.
+        // Carried down in PHP, not by the DB cascade — a soft delete is an
+        // UPDATE, so nothing cascades on its own (see CascadesSoftDeletes).
         $novel->delete();
 
-        $this->assertModelMissing($book);
+        $this->assertNull(Book::find($book->id));
         $this->assertNull(Chapter::find($chapter->id));
+
+        // And the whole tree comes back together.
+        Novel::onlyTrashed()->find($novel->id)->restore();
+
+        $this->assertNotNull(Book::find($book->id));
+        $this->assertNotNull(Chapter::find($chapter->id));
     }
 }

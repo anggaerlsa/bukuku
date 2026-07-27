@@ -119,8 +119,6 @@ class LoreEntryController extends Controller
     {
         $this->authorize('update', $world);
 
-        Uploads::delete($loreEntry->cover_image);
-
         $title = $loreEntry->title;
         $loreEntry->delete();
 

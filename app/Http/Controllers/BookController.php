@@ -128,8 +128,6 @@ class BookController extends Controller
             return back()->with('error', "Buku ini masih berisi {$count} bab. Hapus babnya lebih dahulu kalau memang mau dilenyapkan.");
         }
 
-        Uploads::delete($book->cover_image);
-
         $novel = $book->novel;
         $title = $book->title;
         $book->delete();
@@ -199,7 +197,9 @@ class BookController extends Controller
         $i = 1;
 
         while (
-            Book::where('slug', $slug)
+            // withTrashed: a book in the bin still holds its slug (see
+            // NovelController::uniqueSlug).
+            Book::withTrashed()->where('slug', $slug)
                 ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
