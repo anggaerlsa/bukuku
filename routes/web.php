@@ -16,6 +16,7 @@ use App\Http\Controllers\NovelController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorldController;
@@ -53,6 +54,9 @@ Route::middleware(['auth', 'approved'])->group(function () {
         // Share a novel read-only with every signed-in member.
         Route::patch('novel/{novel}/bagikan', [NovelController::class, 'share'])
             ->name('novels.share');
+
+        // One search box across every kind of record the author has written.
+        Route::get('cari', [SearchController::class, 'index'])->name('search.index');
 
         // Sampah — deleted work, restorable until it is destroyed on purpose.
         Route::get('sampah', [TrashController::class, 'index'])->name('trash.index');
