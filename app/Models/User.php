@@ -29,6 +29,8 @@ class User extends Authenticatable
         'status',
         'approved_at',
         'approved_by',
+        'ai_consented_at',
+        'ai_consent_version',
     ];
 
     /** Account states. Only `active` may use the app. */
@@ -37,6 +39,15 @@ class User extends Authenticatable
         'active' => 'Aktif',
         'rejected' => 'Ditolak',
     ];
+
+    /**
+     * Which revision of the AI disclosure the author must have agreed to.
+     *
+     * Bump this whenever the notice changes what is actually sent to the
+     * provider, and every author is asked again. A past yes must not stand in
+     * for terms they never read.
+     */
+    public const AI_CONSENT_VERSION = 1;
 
     /**
      * The attributes that should be hidden for serialization.
@@ -58,6 +69,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'approved_at' => 'datetime',
+            'ai_consented_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -74,6 +86,26 @@ class User extends Authenticatable
     public function approver(): BelongsTo
     {
         return $this->belongsTo(self::class, 'approved_by');
+    }
+
+    /** API keys this author has saved, one per provider. */
+    public function aiCredentials(): HasMany
+    {
+        return $this->hasMany(AiCredential::class);
+    }
+
+    public function aiCredentialFor(?string $provider = null): ?AiCredential
+    {
+        return $this->aiCredentials()
+            ->where('provider', $provider ?: config('ai.default'))
+            ->first();
+    }
+
+    /** Has this author agreed to the current AI disclosure? */
+    public function hasAiConsent(): bool
+    {
+        return $this->ai_consented_at !== null
+            && (int) $this->ai_consent_version >= self::AI_CONSENT_VERSION;
     }
 
     /** Only an approved account may leave the waiting page. */

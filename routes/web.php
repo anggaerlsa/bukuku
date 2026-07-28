@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AiKeyController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\CommentController;
@@ -44,6 +46,13 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // The author's own API key for the writing assistant. Saving is throttled:
+    // each attempt calls out to the provider to verify the key.
+    Route::put('/profile/ai', [AiKeyController::class, 'update'])
+        ->name('profile.ai.update')
+        ->middleware('throttle:10,1');
+    Route::delete('/profile/ai', [AiKeyController::class, 'destroy'])->name('profile.ai.destroy');
+
     Route::prefix('kelola')->group(function () {
         // Novels — the layer above worlds: the book, which may span several
         // settings. One author → many novels → many worlds.
@@ -54,6 +63,21 @@ Route::middleware(['auth', 'approved'])->group(function () {
         // Share a novel read-only with every signed-in member.
         Route::patch('novel/{novel}/bagikan', [NovelController::class, 'share'])
             ->name('novels.share');
+
+        // Asisten AI — satu novel per percakapan, dan hanya untuk penulisnya.
+        // Mengirim pertanyaan dibatasi laju: satu permintaan memuat seluruh
+        // novel ke penyedia, jadi klik ganda tidak boleh jadi tagihan ganda.
+        Route::patch('novel/{novel}/ai-aktif', [AiChatController::class, 'toggle'])->name('ai.toggle');
+        Route::prefix('novel/{novel}/ai')->group(function () {
+            Route::get('/', [AiChatController::class, 'index'])->name('ai.index');
+            Route::post('/', [AiChatController::class, 'store'])
+                ->name('ai.store')
+                ->middleware('throttle:20,1');
+            Route::get('/{conversation}', [AiChatController::class, 'show'])
+                ->name('ai.show')->whereNumber('conversation');
+            Route::delete('/{conversation}', [AiChatController::class, 'destroy'])
+                ->name('ai.destroy')->whereNumber('conversation');
+        });
 
         // One search box across every kind of record the author has written.
         Route::get('cari', [SearchController::class, 'index'])->name('search.index');

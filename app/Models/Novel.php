@@ -21,12 +21,13 @@ class Novel extends Model
     use SoftDeletes;
 
     /**
-     * A novel is the top of the tree: its worlds (and everything under them)
-     * and its manuscript go into the bin together, and come back together.
+     * A novel is the top of the tree: its worlds (and everything under them),
+     * its manuscript and its AI conversations go into the bin together, and
+     * come back together.
      *
      * @var list<string>
      */
-    protected array $cascadeSoftDeletes = ['worlds', 'books'];
+    protected array $cascadeSoftDeletes = ['worlds', 'books', 'aiConversations'];
 
     protected static function booted(): void
     {
@@ -44,6 +45,7 @@ class Novel extends Model
         'cover_image',
         'status',
         'theme',
+        'ai_enabled',
         'is_shared',
         'shared_at',
     ];
@@ -51,6 +53,7 @@ class Novel extends Model
     protected function casts(): array
     {
         return [
+            'ai_enabled' => 'boolean',
             'is_shared' => 'boolean',
             'shared_at' => 'datetime',
         ];
@@ -98,6 +101,12 @@ class Novel extends Model
     public function genres(): BelongsToMany
     {
         return $this->belongsToMany(Genre::class);
+    }
+
+    /** Chat threads with the writing assistant, about this novel only. */
+    public function aiConversations(): HasMany
+    {
+        return $this->hasMany(AiConversation::class)->latest('updated_at');
     }
 
     public function statusLabel(): string

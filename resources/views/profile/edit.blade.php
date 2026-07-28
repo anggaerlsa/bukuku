@@ -18,6 +18,12 @@
                 </div>
             </div>
 
+            <div class="panel p-6 sm:p-8">
+                <div class="max-w-xl">
+                    @include('profile.partials.ai-key-form')
+                </div>
+            </div>
+
             <div class="panel border-l-4 border-danger p-6 sm:p-8">
                 <div class="max-w-xl">
                     @include('profile.partials.delete-user-form')

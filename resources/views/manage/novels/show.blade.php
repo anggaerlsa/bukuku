@@ -13,6 +13,10 @@
                             {{ $novel->is_shared ? '🔒 Jadikan Privat' : '🔗 Bagikan ke Member' }}
                         </button>
                     </form>
+                    @if ($novel->user_id === auth()->id())
+                        <a href="{{ route('ai.index', $novel) }}" class="btn-outline btn-sm"
+                           title="Tanya asisten AI tentang novel ini">🤖 Asisten AI</a>
+                    @endif
                     <a href="{{ route('novels.edit', $novel) }}" class="btn-outline btn-sm">Sunting Novel</a>
                 </div>
             @endcan
